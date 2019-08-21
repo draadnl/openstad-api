@@ -12,7 +12,8 @@ module.exports = function( req, res, next ) {
 
 	let allowedDomains = (req.site && req.site.config && req.site.config.allowedDomains) || config.allowedDomains;
 	if ( !allowedDomains || allowedDomains.indexOf(domain) === -1) {
-		url = config.url || req.protocol + '://' + req.hostname;
+		const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+		url = config.url || protocol + '://' + req.hostname;
 	}
 	
   res.header('Access-Control-Allow-Origin', url );
