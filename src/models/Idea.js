@@ -325,8 +325,13 @@ module.exports = function( db, sequelize, DataTypes ) {
 
 								// Automatically determine `endDate`
 								if( instance.changed('startDate') ) {
-									var duration = ( instance.config && instance.config.ideas && instance.config.ideas.duration ) || 90;
-									var endDate  = moment(instance.startDate).add(duration, 'days').toDate();
+									if (instance.config && instance.config.ideas && instance.config.ideas.fixedEndDate) {
+										var endDate  = moment(instance.config.ideas.fixedEndDate).toDate();
+									} else {
+										var duration = ( instance.config && instance.config.ideas && instance.config.ideas.duration ) || 90;
+										var endDate  = moment(instance.startDate).add(duration, 'days').toDate();
+									}
+									
 									instance.setDataValue('endDate', endDate);
 								}
 
