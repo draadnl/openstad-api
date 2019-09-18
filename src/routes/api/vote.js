@@ -112,14 +112,17 @@ router.route('/')
 
 		db.Vote
 			.scope({ method: ['forSiteId', req.site.id]})
-			.findAll({ where })
+			.findAll({ where, include: 'user' })
 			.then(function( found ) {
 				res.json(found.map(entry => { return {
 					id: entry.id,
 					ideaId: entry.ideaId,
 					userId: entry.userId,
+					zipCode: entry.user.zipCode,
 					confirmed: entry.confirmed,
 					opinion: entry.opinion,
+					ip: entry.ip,
+					createdAt: entry.createdAt,
 				}}));
 			})
 			.catch(next);
