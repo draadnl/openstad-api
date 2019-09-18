@@ -89,7 +89,7 @@ router.route('/')
 
   // mag je de stemmen bekijken
 	.get(function(req, res, next) {
-		if (!(req.site.config.votes.isViewable || req.user.role == 'admin')) {
+		if (!(req.site.config.votes.isViewable && req.user.role == 'admin')) {
 			return next(createError(403, 'Stemmen zijn niet zichtbaar'));
 		}
 		return next();
@@ -112,14 +112,17 @@ router.route('/')
 
 		db.Vote
 			.scope({ method: ['forSiteId', req.site.id]})
-			.findAll({ where })
+			.findAll({ where, include: 'user' })
 			.then(function( found ) {
 				res.json(found.map(entry => { return {
 					id: entry.id,
 					ideaId: entry.ideaId,
 					userId: entry.userId,
+					zipCode: entry.user.zipCode,
 					confirmed: entry.confirmed,
 					opinion: entry.opinion,
+					ip: entry.ip,
+					createdAt: entry.createdAt,
 				}}));
 			})
 			.catch(next);
@@ -154,7 +157,7 @@ router.route('/*')
 				userId: req.user.id,
 				confirmed: false,
 				confirmReplacesVoteId: null,
-				ip: req.ip,
+                ip: entry.ipOriginXXX ? entry.ipOriginXXX : req.ip,
 				checked: null,
 			}
 		});
