@@ -89,7 +89,7 @@ router.route('/')
 
   // mag je de stemmen bekijken
 	.get(function(req, res, next) {
-		if (!(req.site.config.votes.isViewable || req.user.role == 'admin')) {
+		if (!(req.site.config.votes.isViewable && req.user.role == 'admin')) {
 			return next(createError(403, 'Stemmen zijn niet zichtbaar'));
 		}
 		return next();
