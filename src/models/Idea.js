@@ -13,12 +13,6 @@ const merge = require('merge');
 
 var argVoteThreshold =  config.ideas && config.ideas.argumentVoteThreshold;
 
-// todo: description min/max werkt via de config; dat moet de rest dus ook
-var titleMinLength = config.ideas && config.ideas.titleMinLength || 10;
-var titleMaxLength = config.ideas && config.ideas.titleMaxLength || 50;
-var summaryMinLength = config.ideas && config.ideas.summaryMinLength || 20;
-var summaryMaxLength = config.ideas && config.ideas.summaryMaxLength || 140;
-
 module.exports = function( db, sequelize, DataTypes ) {
 
 	var Idea = sequelize.define('idea', {
@@ -60,7 +54,15 @@ module.exports = function( db, sequelize, DataTypes ) {
 
 		endDate: {
 			type         : DataTypes.DATE,
-			allowNull    : true
+			allowNull    : true,
+			get          : function() {
+				var date = this.getDataValue('endDate');
+        if (this.site && this.site.config && this.site.config.votes && this.site.config.votes.isActiveTo) {
+          return this.site.config.votes.isActiveTo;
+        } else {
+          return date;
+        }
+      },
 		},
 
 		endDateHumanized: {
@@ -106,9 +108,16 @@ module.exports = function( db, sequelize, DataTypes ) {
 			type         : DataTypes.STRING(255),
 			allowNull    : false,
 			validate     : {
-				len: {
-					args : [titleMinLength,titleMaxLength],
-					msg  : `Titel moet tussen ${titleMinLength} en ${titleMaxLength} tekens lang zijn`
+				// len: {
+				//   args : [titleMinLength,titleMaxLength],
+				//   msg  : `Titel moet tussen ${titleMinLength} en ${titleMaxLength} tekens lang zijn`
+				// }
+				textLength(value) {
+				 	let len = sanitize.title(value.trim()).length;
+					let titleMinLength = ( this.config && this.config.ideas && this.config.ideas.titleMinLength || 10 )
+					let titleMaxLength = ( this.config && this.config.ideas && this.config.ideas.titleMaxLength || 50 )
+					if (len < titleMinLength || len > titleMaxLength)
+					throw new Error(`Titel moet tussen ${titleMinLength} en ${titleMaxLength} tekens zijn`);
 				}
 			},
 			set          : function( text ) {
@@ -142,9 +151,16 @@ module.exports = function( db, sequelize, DataTypes ) {
 			type         : DataTypes.TEXT,
 			allowNull    : false,
 			validate     : {
-				len: {
-					args : [summaryMinLength,summaryMaxLength],
-					msg  : `Samenvatting moet tussen ${summaryMinLength} en ${summaryMaxLength} tekens zijn`
+				// len: {
+				//   args : [summaryMinLength,summaryMaxLength],
+				//   msg  : `Samenvatting moet tussen ${summaryMinLength} en ${summaryMaxLength} tekens zijn`
+				// }
+				textLength(value) {
+				 	let len = sanitize.summary(value.trim()).length;
+					let summaryMinLength = ( this.config && this.config.ideas && this.config.ideas.summaryMinLength || 20 )
+					let summaryMaxLength = ( this.config && this.config.ideas && this.config.ideas.summaryMaxLength || 140 )
+					if (len < summaryMinLength || len > summaryMaxLength)
+					throw new Error(`Samenvatting moet tussen ${summaryMinLength} en ${summaryMaxLength} tekens zijn`);
 				}
 			},
 			set          : function( text ) {
@@ -163,7 +179,7 @@ module.exports = function( db, sequelize, DataTypes ) {
 				textLength(value) {
 				 	let len = sanitize.summary(value.trim()).length;
 					let descriptionMinLength = ( this.config && this.config.ideas && this.config.ideas.descriptionMinLength || 140 )
-					let descriptionMaxLength = ( this.config && this.config.ideas && this.config.ideas.descriptionMaxength || 5000 )
+					let descriptionMaxLength = ( this.config && this.config.ideas && this.config.ideas.descriptionMaxLength || 5000 )
 					if (len < descriptionMinLength || len > descriptionMaxLength)
 					throw new Error(`Beschrijving moet tussen ${descriptionMinLength} en ${descriptionMaxLength} tekens zijn`);
 				}
@@ -382,7 +398,7 @@ module.exports = function( db, sequelize, DataTypes ) {
 				let value = this.extraData || {}
 				let newValue = {};
 
-				let configExtraData = this.config.ideas && this.config.ideas.extraData;
+				let configExtraData = this.config && this.config.ideas && this.config.ideas.extraData;
 				if (configExtraData) {
 					Object.keys(configExtraData).forEach((key) => {
 
@@ -402,8 +418,11 @@ module.exports = function( db, sequelize, DataTypes ) {
 						}
 
 					});
-				}
-				// TODO: wat als niet defined?
+				} else {
+          console.log('Idea site config not defined!');
+        }
+
+        // TODO: wat als niet defined?
 				return next(error);
 
 			}
@@ -463,7 +482,13 @@ module.exports = function( db, sequelize, DataTypes ) {
 			// -------------------------
 
 			// defaults
-			api: {
+      default: {
+				include : [{
+					model: db.Site,
+				}]
+      },
+
+      api: {
 			},
 
 			mapMarkers: {
@@ -815,7 +840,7 @@ module.exports = function( db, sequelize, DataTypes ) {
 							endDate DESC
 						`);
 		}
-		
+
 		// Get all running ideas.
 		// TODO: Ideas with status CLOSED should automatically
 		//       become DENIED at a certain point.
