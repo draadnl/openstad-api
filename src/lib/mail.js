@@ -27,6 +27,11 @@ env.addGlobal('SITENAME', config.get('siteName'));
 //env.addGlobal('PAGENAME_POSTFIX', config.get('pageNamePostfix'));
 env.addGlobal('EMAIL', config.get('emailAddress'));
 
+env.addGlobal('TITLE_ROLE', config.get('mail.fieldNames.role') || '');
+env.addGlobal('TITLE_ESTIMATE', config.get('mail.fieldNames.estimate') || '');
+env.addGlobal('TITLE_ADVICE', config.get('mail.fieldNames.advice') || '');
+env.addGlobal('TITLE_PHONE', config.get('mail.fieldNames.phone') || '');
+
 env.addGlobal('GLOBALS', config.get('express.rendering.globals'));
 
 env.addGlobal('config', config)
