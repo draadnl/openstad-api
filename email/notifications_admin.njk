@@ -146,25 +146,25 @@
 										<td style="border: solid 3px #fdc633;">
 											<div style="padding: 20px; font-size: 12px;">
 												{% if idea.extraData.role %}
-													<strong>Rol</strong><br />
+													<strong>{{ TITLE_ROLE }}</strong><br />
 													{{ idea.extraData.role | safe }}
 													<br />
 													<br />
 												{% endif %}
 												{% if idea.extraData.estimate %}
-													<strong>Inschatting kosten</strong><br />
+													<strong>{{ TITLE_ESTIMATE }}</strong><br />
 													{{ idea.extraData.estimate | safe }}
 													<br />
 													<br />
 												{% endif %}
 												{% if idea.extraData.advice %}
-													<strong>Tip</strong><br />
+													<strong>{{ TITLE_ADVICE }}</strong><br />
 													{{ idea.extraData.advice | safe }}
 													<br />
 													<br />
 												{% endif %}
 												{% if idea.extraData.phone %}
-													<strong>Telefoonnummer</strong><br />
+													<strong>{{ TITLE_PHONE }}</strong><br />
 													{{ idea.extraData.phone | safe }}
 													<br />
 													<br />

@@ -53,6 +53,12 @@
           "pass": "PASS"
         }
       }
+    },
+    "fieldNames": {
+      "role": "Rol",
+      "estimate": "Inschatting kosten",
+      "advice": "Tip",
+      "phone": "Telefoonnummer"
     }
   },
   "notifications": {
