@@ -17,7 +17,7 @@ var argVoteThreshold =  config.ideas && config.ideas.argumentVoteThreshold;
 var titleMinLength = config.ideas && config.ideas.titleMinLength || 10;
 var titleMaxLength = config.ideas && config.ideas.titleMaxLength || 50;
 var summaryMinLength = config.ideas && config.ideas.summaryMinLength || 20;
-var summaryMaxLength = config.ideas && config.ideas.summaryMaxLength || 140;
+var summaryMaxLength = config.ideas && config.ideas.summaryMaxLength || 700;
 
 module.exports = function( db, sequelize, DataTypes ) {
 
@@ -144,7 +144,7 @@ module.exports = function( db, sequelize, DataTypes ) {
 			validate     : {
 				len: {
 					args : [summaryMinLength,summaryMaxLength],
-					msg  : `Samenvatting moet tussen ${summaryMinLength} en ${summaryMaxLength} tekens zijn`
+					msg  : `'Wat moet er opgeknapt worden' moet tussen ${summaryMinLength} en ${summaryMaxLength} tekens zijn`
 				}
 			},
 			set          : function( text ) {
