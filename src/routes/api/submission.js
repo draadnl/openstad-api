@@ -2,6 +2,7 @@ const Promise = require('bluebird');
 const express = require('express');
 const db      = require('../../db');
 const auth    = require('../../auth');
+const mail = require('../../lib/mail');
 
 let router = express.Router({mergeParams: true});
 
@@ -37,12 +38,14 @@ router.route('/')
 			userId      			: req.user.id,
 		};
 
-		console.log('data', data);
-
 		db.Submission
 			.create(data)
 			.then(result => {
 				res.json(result);
+
+				if(req.body.sendMail === '1') {
+                	mail.sendSubmissionConfirmationMail(result, req.body.emailTemplate, req.body.emailSubject, req.site);
+                }
 			})
 	})
 

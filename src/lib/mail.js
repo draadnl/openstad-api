@@ -78,7 +78,7 @@ function sendNotificationMail( data ) {
 	} else {
 		html = nunjucks.render('notifications_admin.njk', data)
 	}
-	
+
 	sendMail({
 		to          : data.to,
 		from        : data.from,
@@ -145,6 +145,49 @@ function sendThankYouMail( idea, user, site ) {
 
 }
 
+// send email to user that submitted an form
+function sendSubmissionConfirmationMail( submission, template, emailSubject, site ) {
+    const url = ( site && site.config.cms && site.config.cms.url ) || ( config && config.url );
+    const hostname = ( site && site.config.cms && site.config.cms.hostname ) || ( config && config.hostname );
+    const sitename = ( site && site.title ) || ( config && config.get('siteName') );
+
+    const data    = {
+        date: new Date(),
+        submission: submission,
+        HOSTNAME: hostname,
+        SITENAME: sitename,
+        URL: url,
+    };
+
+    if(!template) {
+        throw new Error('template is not defined');
+    }
+
+    const html = nunjucks.render(template + '.njk', data);
+
+    const text = htmlToText.fromString(html, {
+        ignoreImage: true,
+        hideLinkHrefIfSameAsText: true,
+        uppercaseHeadings: false
+    });
+
+    const attachments = ( site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.attachments ) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.attachments )  || [{
+        filename : 'logo.png',
+        path     : 'email/img/logo.png',
+        cid      : 'logo'
+    }];
+
+    sendMail({
+        to: data.submission.email,
+        from: (site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.from) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.from ) || config.email,
+        replyTo: (site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.replyTo) ? site.config.ideas.feedbackEmail.replyTo : null,
+        subject: emailSubject || 'Bedankt voor je inzending',
+        html: html,
+        text: text,
+        attachments: attachments,
+    });
+}
+
 // send email to user that submitted an idea
 function sendNewsletterSignupConfirmationMail( newslettersignup, user, site ) {
 
@@ -196,9 +239,10 @@ function sendNewsletterSignupConfirmationMail( newslettersignup, user, site ) {
 }
 
 module.exports = {
-  sendMail,
+    sendMail,
 	sendNotificationMail,
-  sendThankYouMail,
-	sendNewsletterSignupConfirmationMail,
+    sendThankYouMail,
+    sendNewsletterSignupConfirmationMail,
+    sendSubmissionConfirmationMail
 };
 
