@@ -154,7 +154,7 @@ module.exports = function( db, sequelize, DataTypes ) {
 
 		description: {
 			type         : DataTypes.TEXT,
-			allowNull    : false,
+			allowNull    : true,
 			validate     : {
 				// len: {
 				//  	args : [( this.config && this.config.ideas && config.ideas.descriptionMinLength || 140 ) ,descriptionMaxLength],
