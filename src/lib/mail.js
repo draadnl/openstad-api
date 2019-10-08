@@ -177,10 +177,12 @@ function sendSubmissionConfirmationMail( submission, template, emailSubject, sit
         cid      : 'logo'
     }];
 
-    console.log ('====> send mail', data.submission);
+    let submittedData = JSON.parse(data.submission.submittedData);
+    
+    console.log ('====> send mail', submittedData);
     
     sendMail({
-        to: data.submission.bc_email,
+        to: submittedData.bc_email,
         from: (site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.from) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.from ) || config.email,
         replyTo: (site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.replyTo) ? site.config.ideas.feedbackEmail.replyTo : null,
         subject: emailSubject || 'Bedankt voor je inzending',
