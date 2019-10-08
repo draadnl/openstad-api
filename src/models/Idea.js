@@ -162,7 +162,7 @@ module.exports = function( db, sequelize, DataTypes ) {
 				// },
 				textLength(value) {
 				 	let len = sanitize.summary(value.trim()).length;
-					let descriptionMinLength = ( this.config && this.config.ideas && this.config.ideas.descriptionMinLength || 140 )
+					let descriptionMinLength = ( this.config && this.config.ideas && this.config.ideas.descriptionMinLength || 0 )
 					let descriptionMaxLength = ( this.config && this.config.ideas && this.config.ideas.descriptionMaxength || 5000 )
 					if (len < descriptionMinLength || len > descriptionMaxLength)
 					throw new Error(`Beschrijving moet tussen ${descriptionMinLength} en ${descriptionMaxLength} tekens zijn`);
