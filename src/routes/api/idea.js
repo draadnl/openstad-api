@@ -220,7 +220,7 @@ function filterBody(req) {
 	}
 
 	keys.forEach((key) => {
-		if (req.body[key]) {
+		if (req.body[key] || key === 'description') {
 			filteredBody[key] = req.body[key];
 		}
 	});
