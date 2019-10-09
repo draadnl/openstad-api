@@ -1,6 +1,7 @@
 const ExpressBrute = require('express-brute');
 const createError = require('http-errors')
 const moment = require('moment-timezone');
+const config = require('config');
 
 const failCallback = function (req, res, next, nextValidRequestDate) {
   next(createError(429, "Te veel verzoeken, probeer het weer " + moment(nextValidRequestDate).fromNow()));
@@ -17,7 +18,7 @@ const handleStoreError = function (error) {
 
 //CONFIGURE BRUTE FORCE PROTECT
 let postBruteForce = new ExpressBrute(new ExpressBrute.MemoryStore(), {
-	freeRetries: 3,
+	freeRetries: 120,
 	minWait: 30*1000, // 30 seconds
 	maxWait: 60*60*1000, // 1 hour,
 	failCallback: failCallback,
@@ -26,12 +27,13 @@ let postBruteForce = new ExpressBrute(new ExpressBrute.MemoryStore(), {
 
 exports.postMiddleware = function(req, res, next) {
 	const ip = req.headers['X-Forwarded-For'] || req.ip;
-	if (req.site && req.site.config && req.site.config.ignoreBruteForce && req.site.config.ignoreBruteForce.indexOf(ip) != -1) {
+	if ((config.ignoreBruteForce && config.ignoreBruteForce.indexOf(ip) != -1) || ( req.site && req.site.config && req.site.config.ignoreBruteForce && req.site.config.ignoreBruteForce.indexOf(ip) != -1 )) {
 		next();
 	} else {
 		postBruteForce.prevent(req, res, next);
 	}
 }
+
 
 //CONFIGURE BRUTE FORCE PROTECT
 let globalBruteForce = new ExpressBrute(new ExpressBrute.MemoryStore(), {
@@ -47,7 +49,8 @@ let globalBruteForce = new ExpressBrute(new ExpressBrute.MemoryStore(), {
 
 exports.globalMiddleware = function(req, res, next) {
 	const ip = req.headers['X-Forwarded-For'] || req.ip;
-	if (req.site && req.site.config && req.site.config.ignoreBruteForce && req.site.config.ignoreBruteForce.indexOf(ip) != -1) {
+	console.log('ip', ip);
+	if ((config.ignoreBruteForce && config.ignoreBruteForce.indexOf(ip) != -1) || ( req.site && req.site.config && req.site.config.ignoreBruteForce && req.site.config.ignoreBruteForce.indexOf(ip) != -1 )) {
 		next();
 	} else {
 		globalBruteForce.prevent(req, res, next);

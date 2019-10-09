@@ -7,6 +7,8 @@ const auth        = require('../../auth');
 const config      = require('config');
 const merge       = require('merge');
 const bruteForce = require('../../middleware/brute-force');
+const {Op} = require('sequelize');
+
 
 let router = express.Router({mergeParams: true});
 
@@ -114,16 +116,23 @@ router.route('/')
 			.scope({ method: ['forSiteId', req.site.id]})
 			.findAll({ where, include: 'user' })
 			.then(function( found ) {
-				res.json(found.map(entry => { return {
-					id: entry.id,
-					ideaId: entry.ideaId,
-					userId: entry.userId,
-					zipCode: entry.user.zipCode,
-					confirmed: entry.confirmed,
-					opinion: entry.opinion,
-					ip: entry.ip,
-					createdAt: entry.createdAt,
-				}}));
+				res.json(found.map(entry => {
+					let vote = {
+						id: entry.id,
+						ideaId: entry.ideaId,
+						userId: entry.userId,
+						confirmed: entry.confirmed,
+						opinion: entry.opinion
+					};
+
+					if (req.user.role == 'admin') {
+						vote.ip = entry.ip;
+						vote.createdAt = entry.createdAt;
+						vote.checked =  entry.checked;
+					}
+
+					return vote;
+				}));
 			})
 			.catch(next);
 	});
@@ -181,7 +190,41 @@ router.route('/*')
   // validaties voor voteType=likes
 	.post(function(req, res, next) {
 		if (req.site.config.votes.voteType != 'likes') return next();
-		return next();
+
+		if (req.site.config.votes.voteType == 'likes' && req.site.config.votes.requiredUserRole == 'anonymous') {
+			req.votes.forEach((vote) => {
+				// check if votes exists for same opinion on the same IP within 5 minutes
+				const whereClause = {
+						ip: vote.ip,
+						//opinion : vote.opinion,
+						ideaId: vote.ideaId,
+						createdAt: {
+							[Op.gte]: db.sequelize.literal('NOW() - INTERVAL 5 MINUTE'),
+						}
+				};
+
+				// Make sure it only blocks new users
+				// otherwise the toggle functionality for liking is blocked
+				if (req.user) {
+					whereClause.userId = {
+						[Op.ne] : req.user.id
+					};
+				}
+
+				// get existing votes for this IP
+				db.Vote
+					.findAll({ where:whereClause })
+					.then(found => {
+						if (found && found.length > 0) {
+							throw new Error('Je hebt al gestemd');
+						}
+						return next();
+					})
+					.catch(next)
+			});
+		} else {
+			return next();
+		}
 	})
 
   // validaties voor voteType=count
@@ -287,5 +330,43 @@ router.route('/*')
 			})
 			.catch(next)
 	})
+
+	router.route('/:voteId(\\d+)/toggle')
+		.all(( req, res, next ) => {
+			var voteId = req.params.voteId;
+
+			db.Vote
+			.findOne({
+				where: { id: voteId }
+			})
+			.then(function( vote ) {
+				if( vote ) {
+					req.vote = vote;
+				}
+				next();
+			})
+			.catch(next);
+		})
+		.all(auth.can('idea:admin'))
+			.get(function( req, res, next ) {
+				var ideaId = req.params.ideaId;
+				var vote   = req.vote;
+
+				vote.toggle()
+					.then(function() {
+						res.json({
+							id: vote.id,
+							ideaId: vote.ideaId,
+							userId: vote.userId,
+							confirmed: vote.confirmed,
+							opinion: vote.opinion,
+							ip: vote.ip,
+						  createdAt: vote.createdAt,
+							checked: vote.checked
+						});
+					})
+					.catch(next);
+			});
+
 
 module.exports = router;
