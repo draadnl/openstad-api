@@ -137,11 +137,7 @@ function sendThankYouMail( idea, user, site ) {
     uppercaseHeadings: false
   });
 
-  let attachments = ( site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.attachments ) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.attachments )  || [{
-		filename : 'logo.png',
-		path     : 'email/img/logo.png',
-		cid      : 'logo'
-  }];
+  let attachments = ( site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.attachments ) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.attachments )  || ['logo.png'];
 
   sendMail({
     to: user.email,
@@ -181,13 +177,10 @@ function sendSubmissionConfirmationMail( submission, template, emailSubject, sit
         uppercaseHeadings: false
     });
 
-    const attachments = ( site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.attachments ) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.attachments )  || [{
-        filename : 'logo.png',
-        path     : 'email/img/logo.png',
-        cid      : 'logo'
-    }];
+    const attachments = ( site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.attachments ) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.attachments )  || ['logo.png'];
     
     console.log ('====> send mail', data.submission.submittedData.bc_email);
+    console.log (attachments);
     
     sendMail({
         to: data.submission.submittedData.bc_email,
