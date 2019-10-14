@@ -59,6 +59,7 @@ router.route('*')
 		if (!isActive) {
 			return next(createError(403, 'Stemmen is gesloten'));
 		}
+
 		return next();
 	})
 
@@ -91,7 +92,7 @@ router.route('/')
 
   // mag je de stemmen bekijken
 	.get(function(req, res, next) {
-		if (!(req.site.config.votes.isViewable && req.user.role == 'admin')) {
+		if (!(req.site.config.votes.isViewable || req.user.role == 'admin')) {
 			return next(createError(403, 'Stemmen zijn niet zichtbaar'));
 		}
 		return next();
@@ -108,13 +109,33 @@ router.route('/')
 			where.userId = userId;
 		}
 		let opinion = req.query.opinion;
+
 		if (opinion && (opinion == 'yes' || opinion == 'no')) {
 			where.opinion = opinion;
 		}
 
+		/**
+		 * In case of no opinion, it's a bug with the likes, dont send them
+		 * @TODO debug in what case this happens.
+		 */
+		if (req.site.config.votes.voteType === 'likes') {
+			where.opinion =  {
+      	[Op.ne]: null
+    	};
+		}
+
+
+		const scopes = [
+			{ method: ['forSiteId', req.site.id]}
+		];
+
+		if (req.user && req.user.role === 'admin') {
+			scopes.push('includeUser');
+		}
+
 		db.Vote
-			.scope({ method: ['forSiteId', req.site.id]})
-			.findAll({ where, include: 'user' })
+			.scope(scopes)
+			.findAll({ where })
 			.then(function( found ) {
 				res.json(found.map(entry => {
 					let vote = {
@@ -125,10 +146,11 @@ router.route('/')
 						opinion: entry.opinion
 					};
 
-					if (req.user.role == 'admin') {
+					if (req.user && req.user.role === 'admin') {
 						vote.ip = entry.ip;
 						vote.createdAt = entry.createdAt;
 						vote.checked =  entry.checked;
+						vote.user = entry.user;
 					}
 
 					return vote;
@@ -196,7 +218,7 @@ router.route('/*')
 				// check if votes exists for same opinion on the same IP within 5 minutes
 				const whereClause = {
 						ip: vote.ip,
-						//opinion : vote.opinion,
+			//			opinion : vote.opinion,
 						ideaId: vote.ideaId,
 						createdAt: {
 							[Op.gte]: db.sequelize.literal('NOW() - INTERVAL 5 MINUTE'),
