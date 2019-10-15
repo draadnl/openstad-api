@@ -115,10 +115,24 @@
 					Je aanmelding is goed ontvangen. Lees hieronder de door jou ingevoerde informatie.
 					<br/>
 					<br/>
-					<ul>
-						<!-- Velden invoeren-->
-					</ul>
-
+					{% if submittedData  %}
+						<table cellpadding="0" cellspacing="0" border="0" align="center" width="100%" style="color: #000; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; width:100%; border: solid 3px #f3f3f4;">
+							<tr>
+								<td style="border: solid 3px #fdc633;">
+									<div style="padding: 20px; font-size: 12px;">
+									{% for fieldKey, value in submittedData %}
+										<strong>{{ titles[fieldKey] }}</strong><br />
+										{{ value | safe }}
+										<br />
+										<br />
+									{% endfor %}
+									</div>
+								</td>
+							</tr>
+						</table>
+					{% endif %}
+					<br/>
+					<br/>
 					<strong>Hoe gaat het verder?</strong><br />
 					<ul>
 					    <li>Bewoners en ondernemers van De Brinken kunnen zich tot 21 oktober aanmelden voor de bewonerscommissie.</li>
