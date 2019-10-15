@@ -152,7 +152,7 @@ function sendThankYouMail( idea, user, site ) {
 }
 
 // send email to user that submitted an form
-function sendSubmissionConfirmationMail( submission, template, emailSubject, site ) {
+function sendSubmissionConfirmationMail( submission, template, emailSubject, submittedData, titles, site ) {
     const url = ( site && site.config.cms && site.config.cms.url ) || ( config && config.url );
     const hostname = ( site && site.config.cms && site.config.cms.hostname ) || ( config && config.hostname );
     const sitename = ( site && site.title ) || ( config && config.get('siteName') );
@@ -160,6 +160,8 @@ function sendSubmissionConfirmationMail( submission, template, emailSubject, sit
     const data    = {
         date: new Date(),
         submission: submission,
+        submittedData: submittedData,
+        titles: titles,
         HOSTNAME: hostname,
         SITENAME: sitename,
         URL: url,
@@ -179,14 +181,55 @@ function sendSubmissionConfirmationMail( submission, template, emailSubject, sit
 
     const attachments = ( site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.attachments ) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.attachments )  || ['logo.png'];
     
-    console.log ('====> send mail', data.submission.submittedData.bc_email);
-    console.log (attachments);
-    
     sendMail({
         to: data.submission.submittedData.bc_email,
         from: (site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.from) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.from ) || config.email,
         replyTo: (site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.replyTo) ? site.config.ideas.feedbackEmail.replyTo : null,
         subject: emailSubject || 'Bedankt voor je inzending',
+        html: html,
+        text: text,
+        attachments: attachments,
+    });
+}
+
+function sendSubmissionAdminMail( submission, template, emailSubject, submittedData, titles, site ) {
+    const url = ( site && site.config.cms && site.config.cms.url ) || ( config && config.url );
+    const hostname = ( site && site.config.cms && site.config.cms.hostname ) || ( config && config.hostname );
+    const sitename = ( site && site.title ) || ( config && config.get('siteName') );
+
+    const data    = {
+        date: new Date(),
+        submission: submission,
+        submittedData: submittedData,
+        titles: titles,
+        HOSTNAME: hostname,
+        SITENAME: sitename,
+        URL: url,
+    };
+
+    if(!template) {
+        throw new Error('template is not defined');
+    }
+    
+    if (!(site || site.config || site.config.notifications || site.config.notifications.to)) {
+        throw new Error('Notification email is not defined');
+    }
+
+    const html = nunjucks.render('submission_admin.njk', data);
+
+    const text = htmlToText.fromString(html, {
+        ignoreImage: true,
+        hideLinkHrefIfSameAsText: true,
+        uppercaseHeadings: false
+    });
+
+    const attachments = ( site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.attachments ) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.attachments )  || ['logo.png'];
+    
+    sendMail({
+        to: (site && site.config && site.config.notifications && site.config.notifications.to) ? site.config.notifications.to : null,
+        from: (site && site.config && site.config.notifications && site.config.notifications.from) ? site.config.notifications.from : null,
+        replyTo: (site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.replyTo) ? site.config.ideas.feedbackEmail.replyTo : null,
+        subject: emailSubject || 'Nieuwe inzending ' + sitename,
         html: html,
         text: text,
         attachments: attachments,
@@ -247,6 +290,7 @@ module.exports = {
 	sendNotificationMail,
     sendThankYouMail,
     sendNewsletterSignupConfirmationMail,
-    sendSubmissionConfirmationMail
+    sendSubmissionConfirmationMail,
+    sendSubmissionAdminMail
 };
 
