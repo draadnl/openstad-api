@@ -145,6 +145,16 @@
 									<tr>
 										<td style="border: solid 3px #fdc633;">
 											<div style="padding: 20px; font-size: 12px;">
+												{% if idea.user %}
+												<strong>Naam indiener</strong><br />
+												{{ idea.user.firstName | safe }} {{ idea.user.lastName | safe }}
+												<br />
+												<br />
+												<strong>E-mail adres indiener</strong><br />
+												{{ idea.user.email | safe }}
+												<br />
+												<br />
+												{% endif %}
 												{% if idea.extraData.role %}
 													<strong>{{ TITLE_ROLE }}</strong><br />
 													{{ idea.extraData.role | safe }}
