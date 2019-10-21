@@ -166,7 +166,9 @@ router.route('/:ideaId(\\d+)')
 				req.body.location = JSON.parse(req.body.location || null);
 			} catch(err) {}
 		} else {
-			req.body.location = JSON.parse(null);
+			if (!req.body.modBreak) {
+				req.body.location = JSON.parse(null);
+			}
 		}
 
 		req.idea
