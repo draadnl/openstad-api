@@ -225,6 +225,25 @@ function createIdeaJSON(idea, user) {
 	result.config = null;
 	result.site = null;
 	result.can = can;
+
+
+	// Fixme: hide email in arguments
+  if(idea.argumentsAgainst) {
+    result.argumentsAgainst = result.argumentsAgainst.map((argument) => {
+      argument.user.email = user.role === 'admin' ? argument.user.email : '';
+
+      return argument;
+    });
+  }
+
+  if(idea.argumentsFor) {
+    result.argumentsFor = result.argumentsFor.map((argument) => {
+    	argument.user.email = user.role === 'admin' ? argument.user.email : '';
+
+    	return argument;
+		});
+  }
+
 	if (idea.user) {
 		result.user = {
 			firstName: idea.user.firstName,
