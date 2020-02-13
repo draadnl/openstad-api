@@ -236,24 +236,31 @@ function createIdeaJSON(idea, user) {
 	result.config = null;
 	result.site = null;
 	result.can = can;
-
-
-	// Fixme: hide email in arguments
-  if(idea.argumentsAgainst) {
-    result.argumentsAgainst = result.argumentsAgainst.map((argument) => {
-      argument.user.email = user.role === 'admin' ? argument.user.email : '';
-
-      return argument;
-    });
-  }
-
-  if(idea.argumentsFor) {
-    result.argumentsFor = result.argumentsFor.map((argument) => {
-    	argument.user.email = user.role === 'admin' ? argument.user.email : '';
-
-    	return argument;
+	
+	// Fixme: hide email in arguments and their reactions
+	function hideEmailsForNormalUsers(arguments) {
+		return arguments.map((argument) => {
+			argument.user.email = user.role === 'admin' ? argument.user.email : '';
+			
+			if (argument.reactions) {
+				argument.reactions = argument.reactions.map((reaction) => {
+					reaction.user.email = user.role === 'admin' ? reaction.user.email : '';
+					
+					return reaction;
+				})
+			}
+			
+			return argument;
 		});
-  }
+	}
+	
+	if (idea.argumentsAgainst) {
+		result.argumentsAgainst = hideEmailsForNormalUsers(result.argumentsAgainst);
+	}
+	
+	if (idea.argumentsFor) {
+		result.argumentsFor = hideEmailsForNormalUsers(result.argumentsFor);
+	}
 
 	if (idea.user) {
 		result.user = {
