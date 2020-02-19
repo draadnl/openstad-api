@@ -90,14 +90,14 @@ function sendNotificationMail( data ) {
 // send email to user that submitted an idea
 function sendThankYouMail(idea, user) {
   
-  let url         = siteConfig.getCmsUrl();
-  let hostname    = siteConfig.getCmsHostname();
-  let sitename    = siteConfig.getTitle();
+  const url         = siteConfig.getCmsUrl();
+  const hostname    = siteConfig.getCmsHostname();
+  const sitename    = siteConfig.getTitle();
   let fromAddress = siteConfig.getIdeasFeedbackEmailFrom() || config.email;
   if (fromAddress.match(/^.+<(.+)>$/, '$1')) fromAddress = fromAddress.replace(/^.+<(.+)>$/, '$1');
   
-  let inzendingPath = (siteConfig.getIdeasFeedbackEmailInzendingPath() && siteConfig.getIdeasFeedbackEmailInzendingPath().replace(/\[\[ideaId\]\]/, idea.id)) || "/";
-  let inzendingURL  = url + inzendingPath;
+  const inzendingPath = (siteConfig.getIdeasFeedbackEmailInzendingPath() && siteConfig.getIdeasFeedbackEmailInzendingPath().replace(/\[\[ideaId\]\]/, idea.id)) || "/";
+  const inzendingURL  = url + inzendingPath;
   
   let data = {
     date:     new Date(),
@@ -111,21 +111,21 @@ function sendThankYouMail(idea, user) {
   };
   
   let html;
-  let template = siteConfig.getIdeasFeedbackEmailTemplate();
+  const template = siteConfig.getIdeasFeedbackEmailTemplate();
   if (template) {
     html = nunjucks.renderString(template, data);
   } else {
     html = nunjucks.render('idea_created.njk', data);
   }
   
-  let text = htmlToText.fromString(html, {
+  const text = htmlToText.fromString(html, {
     ignoreImage:              true,
     hideLinkHrefIfSameAsText: true,
     uppercaseHeadings:        false
   });
-
-  let attachments = ( site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.attachments ) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.attachments )  || ['logo.png'];
-
+  
+  const attachments = siteConfig.getIdeasFeedbackEmailAttachments();
+  
   sendMail({
     to: user.email,
     replyTo: (site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.replyTo) ? site.config.ideas.feedbackEmail.replyTo : null,
@@ -226,16 +226,15 @@ function sendSubmissionAdminMail( submission, template, emailSubject, submittedD
 // send email to user that submitted an idea
 function sendNewsletterSignupConfirmationMail( newslettersignup, user ) {
 
-  let url         = siteConfig.getCmsUrl();
-  let hostname    = siteConfig.getCmsHostname();
-  let sitename    = siteConfig.getTitle();
+  const url         = siteConfig.getCmsUrl();
+  const hostname    = siteConfig.getCmsHostname();
+  const sitename    = siteConfig.getTitle();
   let fromAddress = siteConfig.getIdeasFeedbackEmailFrom() || config.email;
   if ( fromAddress.match(/^.+<(.+)>$/, '$1') ) fromAddress = fromAddress.replace(/^.+<(.+)>$/, '$1');
 
-	let confirmationUrl = siteConfig.getNewsletterSignupConfirmationEmailUrl();
-	confirmationUrl = confirmationUrl.replace(/\[\[token\]\]/, newslettersignup.confirmToken)
+	const confirmationUrl = siteConfig.getNewsletterSignupConfirmationEmailUrl().replace(/\[\[token\]\]/, newslettersignup.confirmToken)
 
-  let data    = {
+  const data    = {
     date: new Date(),
     user: user,
     HOSTNAME: hostname,
@@ -253,13 +252,18 @@ function sendNewsletterSignupConfirmationMail( newslettersignup, user ) {
 		html = nunjucks.render('confirm_newsletter_signup.njk', data);
 	}
 
-  let text = htmlToText.fromString(html, {
+  const text = htmlToText.fromString(html, {
     ignoreImage: true,
     hideLinkHrefIfSameAsText: true,
     uppercaseHeadings: false
   });
 
   let attachments = ( site && site.config && site.config.newslettersignup && site.config.newslettersignup.confirmationEmail && site.config.newslettersignup.confirmationEmail.attachments ) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.attachments )  || ['logo.png'];
+  const attachments = siteConfig.getNewsletterSignupConfirmationEmailAttachments() || [{
+		filename : 'logo.png',
+		path     : 'email/img/logo.png',
+		cid      : 'logo'
+  }];
 
   sendMail({
     to: newslettersignup.email,
