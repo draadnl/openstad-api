@@ -166,7 +166,9 @@ router.route('/:ideaId(\\d+)')
 				req.body.location = JSON.parse(req.body.location || null);
 			} catch(err) {}
 		} else {
-			req.body.location = JSON.parse(null);
+			if (!req.body.modBreak) {
+				req.body.location = JSON.parse(null);
+			}
 		}
 
 		req.idea
@@ -203,7 +205,7 @@ function filterBody(req) {
 	}
 
 	keys.forEach((key) => {
-		if (req.body[key]) {
+		if (req.body[key] || key === 'description') {
 			filteredBody[key] = req.body[key];
 		}
 	});

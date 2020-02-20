@@ -45,6 +45,10 @@
 			 color: #164995;
 		 }
 
+		 .multipleImages {
+			 margin-top: 10px;
+		 }
+
 		 .list {
 			 margin-top: 13px;
 		 }
@@ -92,18 +96,12 @@
 				</td>
 				<td></td>
 			</tr>
-			<tr>
-				<td></td>
-				<td width="560">
-					<img src="cid:map" width="561" style="margin-top: 20px;"/>
-				</td>
-				<td></td>
-			</tr>
+
 			<tr>
 				<td></td>
 				<td width="560">
 					<h1>{{SITENAME}}</h1>
-					<h2 class="blue">Bedankt! Bevestig je stem.</h2>
+					<h2 style="color: #294890;">Bedankt voor je aanmelding voor de bewonerscommissie!</h2>
 				</td>
 				<td></td>
 			</tr>
@@ -111,42 +109,43 @@
 				<td></td>
 				<td width="560">
 
-          <br/>
-					Bedankt voor je stem op <a herf="{{URL}}">{{SITENAME}}</a>!
+          <h4>Beste  {{submission.bc_name | default('indiener')}},</h4>
 
+					Bedankt voor je aanmelding voor de bewonerscommissie van {{SITENAME}}.<br/>
+					Je aanmelding is goed ontvangen. Lees hieronder de door jou ingevoerde informatie.
 					<br/>
 					<br/>
-
-					<a href="{{URL}}/idea/{{idea.id}}/vote/confirm?token={{token}}&uid={{userId}}&type=confirmVote" target="_blank"
-					style="background-color: #EC0000; color: #FFF; font-size: 1.25em; padding: 15px 50px; text-decoration: none;"
-					>
-						<b>Klik hier om je stem te bevestigen</b>
-					</a>
-
+					{% if submittedData  %}
+						<table cellpadding="0" cellspacing="0" border="0" align="center" width="100%" style="color: #000; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; width:100%; border: solid 3px #f3f3f4;">
+							<tr>
+								<td style="border: solid 3px #fdc633;">
+									<div style="padding: 20px; font-size: 12px;">
+									{% for fieldKey, value in submittedData %}
+										<strong>{{ titles[fieldKey] }}</strong><br />
+										{{ value | safe }}
+										<br />
+										<br />
+									{% endfor %}
+									</div>
+								</td>
+							</tr>
+						</table>
+					{% endif %}
 					<br/>
 					<br/>
-
-					<strong>Winnend ontwerp</strong><br/>
-					Amsterdammers kiezen het winnende ontwerp! Het ontwerp dat tussen 19 november en 7 december (23:59 uur) de meeste stemmen ophaalt wordt voorgelegd aan de welstandscommissie. Afhankelijk van het ontwerp zal de uitvoering gebeuren op een paneel of doek, al dan niet in samenwerking met een professioneel kunstenaar.<br/>
-					<br/>
-					Hou de website in de gaten voor de uitslag.<br/>
-					<br/>
-					<strong>Feedback?</strong><br/>
-					Vragen of suggesties over dit project kun je naar {{EMAIL}}.<br/>
-					<br/>
-					Hartelijke groet,<br/>
-					Team {{SITENAME}}<br/>
-
-					<br/>
-					<br/>
-
-					<p>
-						<b>Heel veel succes met je campagne!</b>
-					</p>
-
+					<strong>Hoe gaat het verder?</strong><br />
+					<ul>
+					    <li>Bewoners en ondernemers van Mariahoeve kunnen zich tot 10 november aanmelden voor de bewonerscommissie.</li>
+			            <li>De gemeente stelt de bewonerscommissie samen op basis van de aanmeldingen en een goede spreiding over de wijk. Als er meer aanmeldingen zijn dan plaatsen, maakt de gemeente een selectie in overleg met het wijkberaad.</li>
+                        <li>Vóór de bekendmaking van de bewonerscommissie krijg je persoonlijk bericht of je geselecteerd bent.</li>
+						<li>Op 14 november maakt de gemeente online bekend wie er in de bewonerscommissie zitten.</li>
+					</ul>
+					<p>Meer informatie over het project en de bewonerscommissie kun je vinden op <a href="https://mariahoeveknaptop.denhaag.nl" target="_blank">www.mariahoeveknaptop.denhaag.nl</a>. Bij vragen over je aanmelding, nemen we contact met je op.</p>
+					<p>Heb je zelf vragen? Stuur ons dan een <a href="mailto:mariahoeveknaptop@denhaag.nl">e-mail</a>.</p>
 					<p style="margin-bottom: 3em; margin-top: 2em;">
-						Hartelijke groet,<br>
-						<strong style="color: red">Team {{SITENAME}}</strong>
+						Met vriendelijke groet,<br>
+						Team {{SITENAME}}<br />
+                        <a href="mailto:mariahoeveknaptop@denhaag.nl">mariahoeveknaptop@denhaag.nl</a>
 					</p>
 
         </td>
@@ -154,7 +153,7 @@
       </tr>
 			<tr>
 				<td></td>
-				<td style="height: 15px; background-color: #787979;" width="560">
+				<td style="height: 15px; background-color: #edbf07;" width="560">
         </td>
 				<td></td>
       </tr>

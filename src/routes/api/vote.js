@@ -24,6 +24,29 @@ router.route('*')
 		return next();
 	})
 
+// special get route for anonymous likes
+// this is a bit dubious security wise, but so is anonymous voting...
+	.get(function(req, res, next) {
+		let match = req.path.match(/\/idea\/(\d+)$/);
+		if (match) {
+			if (req.site.config.votes.voteType == 'likes' && req.site.config.votes.requiredUserRole == 'anonymous') {
+				bruteForce.postMiddleware(req, res, function(err) {
+					if (err) return next(err);
+					req.body = {
+						ideaId: parseInt(match[1], 10),
+						opinion: req.query.opinion,
+					};
+					req.method = "POST";
+					next();
+				});
+			} else {
+				next(createError(400, 'Anoniem stemmen niet toegestaan'));
+			}
+		} else {
+			next();
+		}
+	})
+
 router.route('*')
 
   // mag er gestemd worden
@@ -173,7 +196,7 @@ router.route('/*')
 				userId: req.user.id,
 				confirmed: false,
 				confirmReplacesVoteId: null,
-				ip: req.ip,
+                ip: entry.ipOriginXXX ? entry.ipOriginXXX : req.ip,
 				checked: null,
 			}
 		});
