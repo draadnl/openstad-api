@@ -18,9 +18,9 @@ const handleStoreError = function (error) {
 
 //CONFIGURE BRUTE FORCE PROTECT
 let postBruteForce = new ExpressBrute(new ExpressBrute.MemoryStore(), {
-	freeRetries: 10,
+	freeRetries: 20,
 	minWait: 30*1000, // 30 seconds
-	maxWait: 60*60*1000, // 1 hour,
+	maxWait: 60*1000, // 1 hour,
 	failCallback: failCallback,
 	handleStoreError: handleStoreError
 });
