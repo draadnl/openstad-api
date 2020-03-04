@@ -192,7 +192,12 @@ router.route('/*')
 		db.Idea
 			.findAll({ where: { id:ids, siteId: req.site.id } })
 			.then(found => {
-				if (req.votes.length != found.length) return next(createError(400, 'Idee niet gevonden'));
+				if (req.site.config.votes.allowExtraVotes) {
+					const uniqueIdeas = getUniqueIdsFromVotes(req.votes);
+					if (uniqueIdeas.length != found.length) return next(createError(400, 'Idee niet gevonden'));
+				} else {
+					if (req.votes.length != found.length) return next(createError(400, 'Idee niet gevonden'));
+				}
 				req.ideas = found;
 				return next();
 			})
@@ -241,8 +246,16 @@ router.route('/*')
   // validaties voor voteType=count
 	.post(function(req, res, next) {
 		if (req.site.config.votes.voteType != 'count') return next();
-		if (req.votes.length >= req.site.config.votes.minIdeas && req.votes.length <= req.site.config.votes.maxIdeas) {
-			return next();
+		if (req.site.config.votes.allowExtraVotes) {
+			const uniqueIdeas = getUniqueIdsFromVotes(req.votes);
+			const totalVotes = uniqueIdeas.length + req.site.config.votes.extraVotes;
+			if (uniqueIdeas.length >= req.site.config.votes.minIdeas && uniqueIdeas.length <= req.site.config.votes.maxIdeas && req.votes.length <= totalVotes) {
+				return next();
+			}
+		} else {
+			if (req.votes.length >= req.site.config.votes.minIdeas && req.votes.length <= req.site.config.votes.maxIdeas) {
+				return next();
+			}
 		}
 		return next(createError(400, 'Aantal ideeen klopt niet'));
 	})
@@ -406,3 +419,7 @@ router.route('/*')
 
 
 module.exports = router;
+
+function getUniqueIdsFromVotes (votes) {
+	return [...new Set(votes.map(vote => vote.ideaId))];
+}
