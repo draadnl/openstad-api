@@ -263,7 +263,7 @@ function createIdeaJSON(idea, user) {
 	}
 	
 	if (idea.extraData && idea.extraData.phone && user.role !== "admin") {
-		if (!idea.user || idea.user.id != user.id) {
+		if (!idea.user || idea.user.email != user.email) {
 			delete result.extraData.phone;
 		}
 	}
