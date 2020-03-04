@@ -96,6 +96,14 @@ voteTypes 'budgeting' en 'count' komen uit westbegroot en molenwijk
 
 Deze waarden gelden bij voteType 'count' resp. 'budgeting', en bepalen de marges voor de ingebrachte stem.
 
+#### allowExtraVotes: true | false
+
+Deze waarde geldt bij voteType 'count' en bepaalt of er extra stemmen geplaatst mogen worden.
+
+#### extraVotes: integer
+
+Indien `allowExtraVotes` op `true` ingesteld staat, kan met `extraVotes` het aantal extra toe te wijzen stemmen worden bepaald.
+
 #### Voorbeeld configuraties
 
 Westbegroot ideeenfase
