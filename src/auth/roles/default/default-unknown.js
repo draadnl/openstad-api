@@ -77,7 +77,7 @@ module.exports = function( helpers, role ) {
 		//submissions
 		'submissions:list'    : false,
 		'submissions:view'    : false,
-		'submissions:create'  : true,
+		'submissions:create'  : false,
 		'submissions:edit'    : false,
 		'submissions:delete'  : false,
 		// articles

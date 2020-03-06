@@ -198,7 +198,9 @@ function filterBody(req) {
 	let filteredBody = {};
 
 	let keys;
-	if (req.user.isAdmin()) {
+	let hasModeratorRights = (req.user.role === 'admin' || req.user.role === 'editor' || req.user.role === 'moderator');
+
+	if (hasModeratorRights) {
 		keys = [ 'siteId', 'meetingId', 'userId', 'startDate', 'endDate', 'sort', 'status', 'title', 'posterImageUrl', 'summary', 'description', 'budget', 'extraData', 'location', 'modBreak', 'modBreakUserId', 'modBreakDate' ];
 	} else {
 		keys = [ 'title', 'summary', 'description', 'extraData', 'location' ];
@@ -210,7 +212,7 @@ function filterBody(req) {
 		}
 	});
 
-	if (req.user.isAdmin()) {
+	if (hasModeratorRights) {
     if (filteredBody.modBreak) {
       if ( !req.idea || req.idea.modBreak != filteredBody.modBreak ) {
         if (!req.body.modBreakUserId) filteredBody.modBreakUserId = req.user.id;
@@ -227,6 +229,8 @@ function filterBody(req) {
 }
 
 function createIdeaJSON(idea, user) {
+	let hasModeratorRights = (user.role === 'admin' || user.role === 'editor' || user.role === 'moderator');
+
 
 	let can = {
 		// edit: user.can('arg:edit', argument.idea, argument),
@@ -275,12 +279,12 @@ function createIdeaJSON(idea, user) {
 			lastName: idea.user.lastName,
 			fullName: idea.user.fullName,
 			nickName: idea.user.nickName,
-			isAdmin: user.role == 'admin',
-			email: user.role == 'admin' ? idea.user.email : '',
+			isAdmin: hasModeratorRights,
+			email: hasModeratorRights ? idea.user.email : '',
 		};
 	} else {
 		result.user = {
-			isAdmin: user.role == 'admin',
+			isAdmin: hasModeratorRights,
 		};
 	}
 	result.createdAtText = moment(idea.createdAt).format('LLL');
