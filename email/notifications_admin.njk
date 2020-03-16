@@ -179,6 +179,16 @@
 													<br />
 													<br />
 												{% endif %}
+												{% if idea.extraData.englishCommunication %}
+													<strong>{{ TITLE_ENGLISH_COMMUNICATION }}</strong><br />
+													{% if idea.extraData.englishCommunication == 'yes' %}
+													Ja
+													{% else %}
+													Nee
+													{% endif %}
+													<br />
+													<br />
+												{% endif %}
 											</div>
 										</td>
 									</tr>

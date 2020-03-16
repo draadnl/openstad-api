@@ -58,7 +58,8 @@
       "role": "Rol",
       "estimate": "Inschatting kosten",
       "advice": "Tip",
-      "phone": "Telefoonnummer"
+      "phone": "Telefoonnummer",
+      "englishCommunication": "Wil aangesproken worden in het engels"
     }
   },
   "notifications": {
