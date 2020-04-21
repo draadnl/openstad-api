@@ -155,6 +155,26 @@
 												<br />
 												<br />
 												{% endif %}
+												{% if idea.extraData.theme %}
+													<strong>Keuze speeltuin</strong><br />
+													{{ idea.extraData.theme | safe }}
+													<br />
+													<br />
+												{% endif %}
+												{% if idea.extraData.playmethod %}
+													<strong>Keuze manieren om te spelen</strong><br />
+													{% for playmethod in idea.extraData.playmethod %}
+													    {{ playmethod | safe }}<br />
+                                                    {% endfor %}
+													<br />
+													<br />
+												{% endif %}
+												{% if idea.extraData.playgroundType %}
+													<strong>Keuze soort speeltuin</strong><br />
+                                                    {{ idea.extraData.playgroundType | safe }}
+													<br />
+													<br />
+												{% endif %}
 												{% if idea.extraData.role %}
 													<strong>{{ TITLE_ROLE }}</strong><br />
 													{{ idea.extraData.role | safe }}
