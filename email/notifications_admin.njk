@@ -155,6 +155,12 @@
 												<br />
 												<br />
 												{% endif %}
+												{% if idea.extraData.accessible_location %}
+													<strong>{{ TITLE_ACCESSIBLE_LOCATION }}</strong><br />
+													{{ idea.extraData.accessible_location | safe }}
+													<br />
+													<br />
+												{% endif %}
 												{% if idea.extraData.role %}
 													<strong>{{ TITLE_ROLE }}</strong><br />
 													{{ idea.extraData.role | safe }}

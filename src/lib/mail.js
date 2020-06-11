@@ -31,6 +31,7 @@ env.addGlobal('TITLE_ROLE', config.get('mail.fieldNames.role') || '');
 env.addGlobal('TITLE_ESTIMATE', config.get('mail.fieldNames.estimate') || '');
 env.addGlobal('TITLE_ADVICE', config.get('mail.fieldNames.advice') || '');
 env.addGlobal('TITLE_PHONE', config.get('mail.fieldNames.phone') || '');
+env.addGlobal('TITLE_ACCESSIBLE_LOCATION', config.get('mail.fieldNames.accessibleLocation') || '');
 
 env.addGlobal('GLOBALS', config.get('express.rendering.globals'));
 
