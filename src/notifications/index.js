@@ -21,6 +21,8 @@ Notifications.addToQueue = function(data) {
 Notifications.processQueue = function(type) {
 
 	let self = this;
+	
+	console.log ('processQueue', self.queue, self.queue[type]);
 
 	if (self.queue[type]) {
 
