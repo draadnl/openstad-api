@@ -18,7 +18,6 @@ module.exports = {
 	//cronTime: '20 */5 * * * *',
 	runOnInit: false,
 	onTick: function() {
-		console.log ('running send_idea_notifications', notifications.queue['idea']);
 		notifications.processQueue('idea');
 	}
 };
