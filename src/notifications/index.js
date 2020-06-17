@@ -39,7 +39,7 @@ Notifications.processQueue = function(type) {
 						});
 						break;
 						
-					default: 
+					default:
 				}
 
 				self.queue[type][siteId] = [];
@@ -54,6 +54,8 @@ Notifications.processQueue = function(type) {
 
 Notifications.sendMessage = function(siteId, type, action, data) {
 
+	console.log ('sending notification', siteId, type, action, data);
+	
 	const db = require('../db'); // looped required
 
 	let self = this;
@@ -84,6 +86,7 @@ Notifications.sendMessage = function(siteId, type, action, data) {
 			let model = type.charAt(0).toUpperCase() + type.slice(1);
 
 			let scope = type == 'idea' ? ['withUser'] : ['withUser', 'withIdea'];
+			console.log ('pre findall', model, scope, instanceIds);
 			db[model].scope(scope).findAll({ where: { id: instanceIds }})
 				.then( found => {
 					maildata.data = {};
@@ -95,6 +98,7 @@ Notifications.sendMessage = function(siteId, type, action, data) {
 						}
 						return json;
 					});
+					console.log ('send notification mail for real', maildata);
 					mail.sendNotificationMail(maildata);
 				});
 
