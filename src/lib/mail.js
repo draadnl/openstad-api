@@ -258,7 +258,6 @@ function sendNewsletterSignupConfirmationMail( newslettersignup, user ) {
     uppercaseHeadings: false
   });
 
-  let attachments = ( site && site.config && site.config.newslettersignup && site.config.newslettersignup.confirmationEmail && site.config.newslettersignup.confirmationEmail.attachments ) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.attachments )  || ['logo.png'];
   const attachments = siteConfig.getNewsletterSignupConfirmationEmailAttachments() || [{
 		filename : 'logo.png',
 		path     : 'email/img/logo.png',
