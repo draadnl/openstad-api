@@ -153,7 +153,7 @@ function sendThankYouMail( idea, user, site ) {
 }
 
 // send email to user that submitted an form
-function sendSubmissionConfirmationMail( submission, template, emailSubject, submittedData, titles, site ) {
+function sendSubmissionConfirmationMail( submission, template, emailSubject, submittedData, titles, site, recipient ) {
     const url = ( site && site.config.cms && site.config.cms.url ) || ( config && config.url );
     const hostname = ( site && site.config.cms && site.config.cms.hostname ) || ( config && config.hostname );
     const sitename = ( site && site.title ) || ( config && config.get('siteName') );
@@ -183,7 +183,7 @@ function sendSubmissionConfirmationMail( submission, template, emailSubject, sub
     const attachments = ( site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.attachments ) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.attachments )  || ['logo.png'];
     
     sendMail({
-        to: data.submission.submittedData.bc_email,
+        to: recipient || data.submission.submittedData.bc_email,
         from: (site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.from) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.from ) || config.email,
         replyTo: (site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.replyTo) ? site.config.ideas.feedbackEmail.replyTo : null,
         subject: emailSubject || 'Bedankt voor je inzending',
@@ -205,7 +205,7 @@ function sendSubmissionAdminMail( submission, template, emailSubject, submittedD
         titles: titles,
         HOSTNAME: hostname,
         SITENAME: sitename,
-        URL: url,
+        URL: url
     };
 
     if(!template) {
@@ -216,7 +216,7 @@ function sendSubmissionAdminMail( submission, template, emailSubject, submittedD
         throw new Error('Notification email is not defined');
     }
 
-    const html = nunjucks.render('submission_admin.njk', data);
+    const html = nunjucks.render(template + '.njk', data);
 
     const text = htmlToText.fromString(html, {
         ignoreImage: true,
