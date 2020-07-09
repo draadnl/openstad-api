@@ -43,10 +43,10 @@ router.route('/')
 			.create(data)
 			.then(result => {
 				res.json(result);
-				
+
 				if(req.body.sendMail === '1') {
                 	mail.sendSubmissionConfirmationMail(result, req.body.emailTemplate, req.body.emailSubject, req.body.submittedData, req.body.titles, req.site, req.body.recipient);
-                	mail.sendSubmissionAdminMail(result, req.body.adminEmailTemplate || 'submission_admin', req.body.emailSubjectAdmin, req.body.submittedData, req.body.titles, req.site);
+                	mail.sendSubmissionAdminMail(result, req.body.emailAdminTemplate || 'submission_admin', req.body.emailSubjectAdmin, req.body.submittedData, req.body.titles, req.site);
                 }
 			})
 	})
