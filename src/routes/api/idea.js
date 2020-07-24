@@ -89,28 +89,6 @@ router.route('/')
 			.catch(next);
 	})
 
-// user idea list
-// --------
-router.route('/user')
-  .all(function(req, res, next) {
-
-    console.log('get ideas for user: ', req.user.id);
-    db.Idea
-      .scope(...req.scope, 'includeVoteCount', 'includeDraftIdeas')
-      .findAll({
-        where: { userId: parseInt(req.user.id), siteId: req.params.siteId }
-      })
-      .then(found => {
-        return found.map( entry => {
-          return createIdeaJSON(entry, req.user);
-        });
-      })
-      .then(function( found ) {
-        res.json(found);
-      })
-      .catch(next);
-  })
-
 // create idea
 // -----------
 	.post(auth.can('idea:create'))
@@ -153,6 +131,28 @@ router.route('/user')
 				}
 			});
 	})
+
+// user idea list
+// --------
+router.route('/user')
+  .all(function(req, res, next) {
+
+    console.log('get ideas for user: ', req.user.id);
+    db.Idea
+      .scope(...req.scope, 'includeVoteCount', 'includeDraftIdeas')
+      .findAll({
+        where: { userId: parseInt(req.user.id), siteId: req.params.siteId }
+      })
+      .then(found => {
+        return found.map( entry => {
+          return createIdeaJSON(entry, req.user);
+        });
+      })
+      .then(function( found ) {
+        res.json(found);
+      })
+      .catch(next);
+  })
 
 // one idea
 // --------
