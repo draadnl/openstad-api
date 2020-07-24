@@ -105,7 +105,7 @@ module.exports = function( db, sequelize, DataTypes ) {
 		},
 
 		status: {
-			type         : DataTypes.ENUM('OPEN','CLOSED','ACCEPTED','DENIED','BUSY','DONE'),
+			type         : DataTypes.ENUM('OPEN','CLOSED','ACCEPTED','DENIED','BUSY','DONE', 'DRAFT'),
 			defaultValue : 'OPEN',
 			allowNull    : false
 		},
@@ -346,7 +346,7 @@ module.exports = function( db, sequelize, DataTypes ) {
 										var duration = ( instance.config && instance.config.ideas && instance.config.ideas.duration ) || 90;
 										var endDate  = moment(instance.startDate).add(duration, 'days').toDate();
 									}
-									
+
 									instance.setDataValue('endDate', endDate);
 								}
 
@@ -839,7 +839,7 @@ module.exports = function( db, sequelize, DataTypes ) {
 							endDate DESC
 						`);
 		}
-		
+
 		// Get all running ideas.
 		// TODO: Ideas with status CLOSED should automatically
 		//       become DENIED at a certain point.
