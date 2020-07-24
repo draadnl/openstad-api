@@ -155,7 +155,7 @@ module.exports = function( db, sequelize, DataTypes ) {
 
 		summary: {
 			type         : DataTypes.TEXT,
-			allowNull    : false,
+			allowNull    : true,
 			validate     : {
 				len: {
                     args: [summaryMinLength, summaryMaxLength],
@@ -163,7 +163,9 @@ module.exports = function( db, sequelize, DataTypes ) {
 				}
 			},
 			set          : function( text ) {
-				this.setDataValue('summary', sanitize.summary(text.trim()));
+			  if(text) {
+				  this.setDataValue('summary', sanitize.summary(text.trim()));
+        }
 			}
 		},
 
