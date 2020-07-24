@@ -16,6 +16,8 @@ router
 
 		req.scope = ['api'];
 
+
+		req.scope.push('selectVisibleIdeas');
 		var sort = (req.query.sort || '').replace(/[^a-z_]+/i, '') || ( req.cookies['idea_sort'] && req.cookies['idea_sort'].replace(/[^a-z_]+/i, '') );
 		if( sort ) {
 			res.cookie('idea_sort', sort, { expires: 0 });
@@ -86,6 +88,28 @@ router.route('/')
 			})
 			.catch(next);
 	})
+
+// user idea list
+// --------
+router.route('/user')
+  .all(function(req, res, next) {
+
+    console.log('get ideas for user: ', req.user.id);
+    db.Idea
+      .scope(...req.scope, 'includeVoteCount', 'includeDraftIdeas')
+      .findAll({
+        where: { userId: parseInt(req.user.id), siteId: req.params.siteId }
+      })
+      .then(found => {
+        return found.map( entry => {
+          return createIdeaJSON(entry, req.user);
+        });
+      })
+      .then(function( found ) {
+        res.json(found);
+      })
+      .catch(next);
+  })
 
 // create idea
 // -----------

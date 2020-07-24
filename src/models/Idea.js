@@ -524,6 +524,12 @@ module.exports = function( db, sequelize, DataTypes ) {
 				)
 			},
 
+      selectVisibleIdeas: {
+        where: {
+          status: ['OPEN','CLOSED','ACCEPTED','DENIED','BUSY','DONE',]
+        },
+      },
+
 			includeArguments: function( userId ) {
 				return {
 					include: [{
@@ -617,6 +623,12 @@ module.exports = function( db, sequelize, DataTypes ) {
 					]
 				}
 			},
+
+      includeDraftIdeas: {
+        where: {
+          status: ['OPEN','CLOSED','ACCEPTED','DENIED','BUSY','DONE', 'DRAFT']
+        },
+      },
 
 			includeUser: {
 				include: [{
