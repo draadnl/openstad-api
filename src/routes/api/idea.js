@@ -225,7 +225,7 @@ function filterBody(req) {
 	if (req.user.isAdmin()) {
 		keys = [ 'siteId', 'meetingId', 'userId', 'startDate', 'endDate', 'sort', 'status', 'title', 'posterImageUrl', 'summary', 'description', 'budget', 'extraData', 'location', 'modBreak', 'modBreakUserId', 'modBreakDate' ];
 	} else {
-		keys = [ 'title', 'summary', 'description', 'extraData', 'location' ];
+		keys = [ 'title', 'summary', 'description', 'extraData', 'location', 'budget' ];
 	}
 
 	keys.forEach((key) => {
