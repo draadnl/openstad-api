@@ -36,18 +36,25 @@ router.route('/')
 			submittedData     : req.body.submittedData,
 			siteId      			: req.params.siteId,
 			userId      			: req.user.id,
-			formId: req.body.formId
+			formId						: req.body.formId,
+			ideaId						: parseInt(req.body.ideaId) || null,
 		};
-
+		
 		db.Submission
 			.create(data)
-			.then(result => {
+			.then(async result => {
 				res.json(result);
 
 				if(req.body.sendMail === '1') {
-                	mail.sendSubmissionConfirmationMail(result, req.body.emailTemplate, req.body.emailSubject, req.body.submittedData, req.body.titles, req.site, req.body.recipient);
-                	mail.sendSubmissionAdminMail(result, req.body.emailAdminTemplate || 'submission_admin', req.body.emailSubjectAdmin, req.body.submittedData, req.body.titles, req.site);
-                }
+					if(req.body.shouldSendEmailToIdeaUser && data.ideaId) {
+						const idea = await db.Idea.scope('includeUser').findOne({ideaId: data.ideaId});
+
+            mail.sendSubmissionConfirmationMail(result, req.body.userEmailTemplate, req.body.emailSubject, req.body.submittedData, req.body.titles, req.site, idea.user.email, req.body.recipient);
+					}
+
+					mail.sendSubmissionConfirmationMail(result, req.body.emailTemplate, req.body.emailSubject, req.body.submittedData, req.body.titles, req.site, req.body.recipient);
+					mail.sendSubmissionAdminMail(result, req.body.emailAdminTemplate || 'submission_admin', req.body.emailSubjectAdmin, req.body.submittedData, req.body.titles, req.site);
+				}
 			})
 	})
 
