@@ -17,6 +17,11 @@ module.exports = function( db, sequelize, DataTypes ) {
       allowNull    : true
     },
 
+    ideaId: {
+      type         : DataTypes.INTEGER,
+      allowNull    : true
+    },
+
 		status: {
 			type         : DataTypes.ENUM('approved','pending','unapproved'),
 			defaultValue : 'pending',
