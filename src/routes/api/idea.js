@@ -114,7 +114,9 @@ router.route('/')
 			.create(req.body)
 			.then(result => {
 				res.json(createIdeaJSON(result, req.user));
-				mail.sendThankYouMail(result, req.user, req.site) // todo: optional met config?
+				if (idea.status && idea.status != 'DRAFT') {
+					mail.sendThankYouMail(result, req.user, req.site) // todo: optional met config?
+				}
 			})
 			.catch(function( error ) {
 				// todo: dit komt uit de oude routes; maak het generieker
