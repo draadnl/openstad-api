@@ -112,6 +112,30 @@ function sendThankYouMail( idea, user, site ) {
 
 	let inzendingPath = ( site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.inzendingPath && site.config.ideas.feedbackEmail.inzendingPath.replace(/\[\[ideaId\]\]/, idea.id) ) || "/" ;
 	let inzendingURL = url + inzendingPath;
+	
+	let projectPlan, begroting, hulp, toelichtingHulpvraag, hulpGemeente = '';
+	
+	if (idea.extraData) {
+	  if (idea.extraData.projectplan) {
+	    projectPlan = idea.extraData.projectplan;
+    }
+	  
+	  if (idea.extraData.begroting) {
+	    begroting = idea.extraData.begroting;
+    }
+	  
+	  if (idea.extraData.hulp) {
+	    hulp = Object.keys(idea.extraData.hulp).join(", ");
+    }
+	  
+	  if (idea.extraData.toelichting_hulpvraag) {
+	    toelichtingHulpvraag = idea.extraData.toelichting_hulpvraag;
+    }
+	  
+	  if (idea.extraData.hulp_gemeente) {
+	    hulpGemeente = idea.extraData.hulp_gemeente;
+    }
+  }
 
   let data    = {
     date: new Date(),
@@ -121,7 +145,13 @@ function sendThankYouMail( idea, user, site ) {
     SITENAME: sitename,
 		inzendingURL,
     URL: url,
-    EMAIL: fromAddress
+    EMAIL: fromAddress,
+    
+    projectPlan,
+    begroting,
+    hulp,
+    toelichtingHulpvraag,
+    hulpGemeente
   };
 
 	let html;
