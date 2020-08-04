@@ -92,6 +92,12 @@ Notifications.sendMessage = function(siteId, type, action, data) {
 						if ( type == 'idea' ) {
 							let inzendingPath = ( myConfig.ideas && myConfig.ideas.feedbackEmail && myConfig.ideas.feedbackEmail.inzendingPath && myConfig.ideas.feedbackEmail.inzendingPath.replace(/\[\[ideaId\]\]/, entry.id) ) || "/";
 							json.inzendingURL = maildata.URL + inzendingPath;
+							
+							json.hulp = '';
+							
+							if (entry && entry.extraData && entry.extraData.hulp) {
+								json.hulp = Object.keys(entry.extraData.hulp).join(", ");
+							}
 						}
 						return json;
 					});
