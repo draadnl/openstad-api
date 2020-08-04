@@ -183,10 +183,14 @@ function sendThankYouMail( idea, user, site ) {
 }
 
 // send email to user that submitted an form
-function sendSubmissionConfirmationMail( submission, template, emailSubject, submittedData, titles, site, recipient, replyTo ) {
+function sendSubmissionConfirmationMail( submission, template, emailSubject, submittedData, titles, site, recipient, replyTo, idea ) {
     const url = ( site && site.config.cms && site.config.cms.url ) || ( config && config.url );
     const hostname = ( site && site.config.cms && site.config.cms.hostname ) || ( config && config.hostname );
     const sitename = ( site && site.title ) || ( config && config.get('siteName') );
+    
+    if (typeof idea == 'undefined') {
+      idea = {};
+    }
 
     const data    = {
         date: new Date(),
@@ -196,6 +200,7 @@ function sendSubmissionConfirmationMail( submission, template, emailSubject, sub
         HOSTNAME: hostname,
         SITENAME: sitename,
         URL: url,
+        idea
     };
 
     if(!template) {

@@ -47,12 +47,15 @@ router.route('/')
 
 				if(req.body.sendMail === '1') {
 					if(req.body.shouldSendEmailToIdeaUser && data.ideaId) {
-						const idea = await db.Idea.scope('includeUser').findOne({ideaId: data.ideaId});
+						const idea = await db.Idea.scope('includeUser').findOne({where: {id: data.ideaId}});
 
-            mail.sendSubmissionConfirmationMail(result, req.body.userEmailTemplate, req.body.emailSubject, req.body.submittedData, req.body.titles, req.site, idea.user.email, req.body.recipient);
+            mail.sendSubmissionConfirmationMail(result, req.body.userEmailTemplate, req.body.emailSubject, req.body.submittedData, req.body.titles, req.site, idea.user.email, req.body.recipient, idea);
 					}
 
-					mail.sendSubmissionConfirmationMail(result, req.body.emailTemplate, req.body.emailSubject, req.body.submittedData, req.body.titles, req.site, req.body.recipient);
+					if (req.body.emailTemplate) {
+						mail.sendSubmissionConfirmationMail(result, req.body.emailTemplate, req.body.emailSubject, req.body.submittedData, req.body.titles, req.site, req.body.recipient);
+					}
+					
 					mail.sendSubmissionAdminMail(result, req.body.emailAdminTemplate || 'submission_admin', req.body.emailSubjectAdmin, req.body.submittedData, req.body.titles, req.site);
 				}
 			})

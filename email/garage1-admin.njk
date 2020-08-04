@@ -101,7 +101,7 @@
         <td></td>
         <td width="560">
             <h1>Energie uit de Wijk Challenge</h1>
-            <h2 style="color: #294890;">Hulp aangeboden voor jullie initiatief!</h2>
+            <h2 style="color: #294890;">Nieuwe aanmelding voor Initiatieven Garage I</h2>
         </td>
         <td></td>
     </tr>
@@ -109,9 +109,12 @@
         <td></td>
         <td width="560">
 
-            <h4>Beste {{idea.user.firstName}} {{idea.user.lastName}},</h4>
+            <h4>Beste beheerder,</h4>
             <br/>
-            {{submittedData["Jouw voor- en achternaam *"] or 'Indiener'}} wil graag bij jullie initiatief <a href="{{URL}}/plan/{{idea.id}}">{{ idea.title }}</a> helpen. Bekijk het aanbod en neem contact op.<br /><br />
+            Er is zojuist een nieuwe aanmelding geplaatst voor de Initiatieven Garage I.<br />
+Lees hieronder de ingevoerde informatie.
+
+            <br /><br />
             </td>
         <td></td>
     </tr>
@@ -125,13 +128,11 @@
         <td></td>
         <td width="560"><br />
         <strong>Naam</strong><br />
-        {{ submittedData["Jouw voor- en achternaam *"] or 'Niet opgegeven' }}<br /><br />
+        {{ submittedData["Naam"] or 'Niet opgegeven' }}<br /><br />
         <strong>E-mailadres</strong><br />
-        {{ submittedData["Jouw e-mailadres *"] or 'Niet opgegeven' }}<br /><br />
-        <strong>Telefoonnummer</strong><br />
-        {{ submittedData["Jouw telefoonnummer (niet verplicht)"] or 'Niet opgegeven' }}<br /><br />
-        <strong>Ik help graag met</strong><br />
-        {{ submittedData["Waarmee wil je jouw hulp aanbieden? *"] or 'Niet opgegeven' }}<br /><br />
+        {{ submittedData["E-mailadres"] or 'Niet opgegeven' }}<br /><br />
+        <strong>Hulpvraag</strong><br />
+        {{ submittedData["Hulpvraag"] or 'Niet opgegeven' }}<br /><br />
 
         </td>
         <td></td>
@@ -145,7 +146,6 @@
     <tr>
         <td></td>
         <td width="560">
-        <p>Wil je geen gebruik maken van het hulpaanbod of je contactgegevens niet delen met de hulp aanbieder? Stuur ons dan een e-mail, zodat wij de hulp aanbieder kunnen informeren. </p>
         <p>Met vriendelijke groet,<br /><br />
 
 Team Energie uit de Wijk<br />
