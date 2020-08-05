@@ -232,11 +232,15 @@ function sendSubmissionConfirmationMail( submission, template, emailSubject, sub
     });
 }
 
-function sendSubmissionAdminMail( submission, template, emailSubject, submittedData, titles, site ) {
+function sendSubmissionAdminMail( submission, template, emailSubject, submittedData, titles, site, idea) {
     const url = ( site && site.config.cms && site.config.cms.url ) || ( config && config.url );
     const hostname = ( site && site.config.cms && site.config.cms.hostname ) || ( config && config.hostname );
     const sitename = ( site && site.title ) || ( config && config.get('siteName') );
 
+    if (typeof idea == 'undefined') {
+      idea = {};
+    }
+    
     const data    = {
         date: new Date(),
         submission: submission,
@@ -244,7 +248,8 @@ function sendSubmissionAdminMail( submission, template, emailSubject, submittedD
         titles: titles,
         HOSTNAME: hostname,
         SITENAME: sitename,
-        URL: url
+        URL: url,
+        idea
     };
 
     if(!template) {

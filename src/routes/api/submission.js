@@ -56,7 +56,13 @@ router.route('/')
 						mail.sendSubmissionConfirmationMail(result, req.body.emailTemplate, req.body.emailSubject, req.body.submittedData, req.body.titles, req.site, req.body.recipient);
 					}
 					
-					mail.sendSubmissionAdminMail(result, req.body.emailAdminTemplate || 'submission_admin', req.body.emailSubjectAdmin, req.body.submittedData, req.body.titles, req.site);
+					if (data.ideaId) {
+						const idea = await db.Idea.scope('includeUser').findOne({where: {id: data.ideaId}});
+						mail.sendSubmissionAdminMail(result, req.body.emailAdminTemplate || 'submission_admin', req.body.emailSubjectAdmin, req.body.submittedData, req.body.titles, req.site, idea);
+					} else {
+						mail.sendSubmissionAdminMail(result, req.body.emailAdminTemplate || 'submission_admin', req.body.emailSubjectAdmin, req.body.submittedData, req.body.titles, req.site);
+					}
+					
 				}
 			})
 	})
