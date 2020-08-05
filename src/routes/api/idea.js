@@ -291,7 +291,7 @@ function createIdeaJSON(idea, user) {
 		result.argumentsFor = hideEmailsForNormalUsers(result.argumentsFor);
 	}
 
-	if (idea.extraData && idea.extraData.phone && user.role !== "admin" && user.id != idea.user.id) {
+	if (idea.extraData && idea.extraData.phone && user.role !== "admin") {
 		delete result.extraData.phone;
 	}
 
