@@ -114,7 +114,7 @@ router.route('/')
 			.create(req.body)
 			.then(result => {
 				res.json(createIdeaJSON(result, req.user));
-				if (idea.status && idea.status != 'DRAFT') {
+				if (result.status && result.status != 'DRAFT') {
 					mail.sendThankYouMail(result, req.user, req.site) // todo: optional met config?
 				}
 			})
