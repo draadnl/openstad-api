@@ -26,12 +26,13 @@ let postBruteForce = new ExpressBrute(new ExpressBrute.MemoryStore(), {
 });
 
 exports.postMiddleware = function(req, res, next) {
-	const ip = req.headers['X-Forwarded-For'] || req.ip;
+	next();
+	/*const ip = req.headers['X-Forwarded-For'] || req.ip;
 	if ((config.ignoreBruteForce && config.ignoreBruteForce.indexOf(ip) != -1) || ( req.site && req.site.config && req.site.config.ignoreBruteForce && req.site.config.ignoreBruteForce.indexOf(ip) != -1 )) {
 		next();
 	} else {
 		postBruteForce.prevent(req, res, next);
-	}
+	}*/
 }
 
 
@@ -48,11 +49,13 @@ let globalBruteForce = new ExpressBrute(new ExpressBrute.MemoryStore(), {
 });
 
 exports.globalMiddleware = function(req, res, next) {
+	next();
+	/*
 	const ip = req.headers['X-Forwarded-For'] || req.ip;
 	console.log('ip', ip);
 	if ((config.ignoreBruteForce && config.ignoreBruteForce.indexOf(ip) != -1) || ( req.site && req.site.config && req.site.config.ignoreBruteForce && req.site.config.ignoreBruteForce.indexOf(ip) != -1 )) {
 		next();
 	} else {
 		globalBruteForce.prevent(req, res, next);
-	}
+	}*/
 }
