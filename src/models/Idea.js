@@ -937,11 +937,12 @@ module.exports = function( db, sequelize, DataTypes ) {
 	}
 
 	Idea.prototype.isOpen = function() {
-		return this.status === 'OPEN';
+		return this.status === 'OPEN' || this.status === 'DRAFT';
 	}
 
 	Idea.prototype.isRunning = function() {
 		return this.status === 'OPEN'     ||
+			this.status === 'DRAFT'   ||
 			this.status === 'CLOSED'   ||
 			this.status === 'ACCEPTED' ||
 			this.status === 'BUSY'

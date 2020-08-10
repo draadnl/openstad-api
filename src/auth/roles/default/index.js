@@ -29,7 +29,8 @@ var helpers = {
 		var isOwner   = helpers.isIdeaOwner(user, idea);
 		var voteCount = idea.no + idea.yes;
 		var argCount  = idea.argumentsFor && idea.argumentsFor.length && idea.argumentsAgainst && idea.argumentsAgainst.length;
-		return isOwner && !voteCount && !argCount;
+		
+		return isOwner && ((!voteCount && !argCount) || (idea.site && idea.site.config && idea.site.config.ideas && idea.site.config.ideas.canEditAfterFirstLikeOrArg));
 	},
 
 	mayVoteIdea: function( user, idea ) {

@@ -217,6 +217,69 @@ router.route('/:ideaId(\\d+)')
 			.catch(next);
 	})
 
+// single user idea
+// todo: refactor this logic
+// --------
+router.route('/:ideaId(\\d+)/user')
+	.all(function(req, res, next) {
+		var ideaId = parseInt(req.params.ideaId) || 1;
+
+		db.Idea
+			.scope(...req.scope, 'includeVoteCount', 'includeDraftIdeas')
+			.findOne({
+				where: { id: ideaId, userId: parseInt(req.user.id), siteId: req.params.siteId }
+			})
+			.then(found => {
+				if ( !found ) throw new Error('Idea not found');
+				req.idea = found;
+				next();
+			})
+			.catch(next);
+	})
+
+
+// view idea
+// ---------
+	.get(auth.can('idea:view'))
+	.get(function(req, res, next) {
+		res.json(createIdeaJSON(req.idea, req.user));
+	})
+
+// update idea
+// -----------
+	.put(auth.can('idea:edit'))
+	.put(function(req, res, next) {
+		filterBody(req)
+		if (req.body.location) {
+			try {
+				req.body.location = JSON.parse(req.body.location || null);
+			} catch(err) {}
+		} else {
+			if (!req.body.modBreak) {
+				req.body.location = JSON.parse(null);
+			}
+		}
+
+		req.idea
+			.update(req.body)
+			.then(result => {
+				res.json(createIdeaJSON(result, req.user));
+			})
+			.catch(next);
+	})
+
+// delete idea
+// ---------
+	.delete(auth.can('idea:delete'))
+	.delete(function(req, res, next) {
+		req.idea
+			.destroy()
+			.then(() => {
+				res.json({ "idea": "deleted" });
+			})
+			.catch(next);
+	})
+
 // extra functions
 // ---------------
 
