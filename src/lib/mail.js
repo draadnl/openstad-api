@@ -108,7 +108,7 @@ function sendThankYouMail( idea, user, site ) {
   let hostname = ( site && site.config.cms && site.config.cms.hostname ) || ( config && config.hostname );
   let sitename = ( site && site.title ) || ( config && config.get('siteName') );
   let fromAddress = (site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.from) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.from ) || config.email;
-  if ( fromAddress.match(/^.+<(.+)>$/, '$1') ) fromAddress = fromAddress.replace(/^.+<(.+)>$/, '$1');
+  //if ( fromAddress.match(/^.+<(.+)>$/, '$1') ) fromAddress = fromAddress.replace(/^.+<(.+)>$/, '$1');
 
 	let inzendingPath = ( site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.inzendingPath && site.config.ideas.feedbackEmail.inzendingPath.replace(/\[\[ideaId\]\]/, idea.id) ) || "/" ;
 	let inzendingURL = url + inzendingPath;
