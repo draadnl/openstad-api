@@ -66,7 +66,20 @@ Notifications.sendMessage = function(siteId, type, action, data) {
 
 			let maildata = {};
 
-			maildata.subject = type == 'argument' ? 'Nieuwe argumenten geplaatst' : ( action == 'create' ? 'Nieuwe inzending geplaatst' : 'Bestaande inzending bewerkt' );
+			let newEntrySubject = (myConfig.notifications && myConfig.notifications.newEntrySubject) || 'Nieuwe inzending geplaatst';
+			let updateEntrySubject = (myConfig.notifications && myConfig.notifications.updateEntrySubject) || 'Bestaande inzending bewerkt';
+			
+			let template = myConfig.notifications && myConfig.notifications.template;
+			
+			if (type != 'argument') {
+				if (action == 'create') {
+					template = (myConfig.notifications && myConfig.notifications.newEntryTemplate) || template;
+				} else {
+					template = (myConfig.notifications && myConfig.notifications.updateEntryTemplate) || template;
+				}
+			}
+			
+			maildata.subject = type == 'argument' ? 'Nieuwe argumenten geplaatst' : ( action == 'create' ? newEntrySubject : updateEntrySubject );
 
 			maildata.from = ( myConfig.notifications && ( myConfig.notifications.from || ( myConfig.notifications.admin && myConfig.notifications.admin.emailAddress ) ) ) || myConfig.mail.from; // backwards compatible
 			maildata.to = ( myConfig.notifications && myConfig.notifications.to ) || maildata.from;
@@ -78,7 +91,7 @@ Notifications.sendMessage = function(siteId, type, action, data) {
 
 			maildata.subject += ' op ' + maildata.SITENAME;
 
-			maildata.template = myConfig.notifications && myConfig.notifications.template;
+			maildata.template = template;
 
 			let instanceIds = data.map( entry => entry.instanceId );
 			let model = type.charAt(0).toUpperCase() + type.slice(1);
@@ -97,6 +110,12 @@ Notifications.sendMessage = function(siteId, type, action, data) {
 							
 							if (entry && entry.extraData && entry.extraData.hulp) {
 								json.hulp = Object.keys(entry.extraData.hulp).join(", ");
+							}
+							
+							// Exception for DRAFT template
+							if (entry.status == 'DRAFT') {
+								maildata.template = (myConfig.notifications && myConfig.notifications.savedEntryTemplate) || maildata.template;
+								maildata.subject = 'Nieuw initiatief opgeslagen op ' + maildata.SITENAME;
 							}
 						}
 						return json;

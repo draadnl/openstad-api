@@ -250,6 +250,14 @@ router.route('/:ideaId(\\d+)/user')
 	.put(auth.can('idea:edit'))
 	.put(function(req, res, next) {
 		filterBody(req)
+		
+		let sendMail = false;
+		
+		// Send thank you email to user when changing from draft to open
+		if (req.idea.status && req.body.status && req.idea.status == 'DRAFT' && req.body.status == 'OPEN') {
+			sendMail = true;
+		}
+		
 		if (req.body.location) {
 			try {
 				req.body.location = JSON.parse(req.body.location || null);
@@ -263,6 +271,11 @@ router.route('/:ideaId(\\d+)/user')
 		req.idea
 			.update(req.body)
 			.then(result => {
+				
+				if (sendMail) {
+					mail.sendThankYouMail(result, req.user, req.site)
+				}
+				
 				res.json(createIdeaJSON(result, req.user));
 			})
 			.catch(next);
@@ -365,6 +378,7 @@ function createIdeaJSON(idea, user) {
 			fullName: idea.user.fullName,
 			nickName: idea.user.nickName,
 			isAdmin: user.role == 'admin',
+			gender: idea.user.gender ? idea.user.gender : 'unknown',
 			email: user.role == 'admin' ? idea.user.email : '',
 		};
 	} else {
