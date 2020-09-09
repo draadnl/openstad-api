@@ -44,7 +44,7 @@ router.route('/')
 				res.json(result);
 				
 				if(req.body.sendMail === '1') {
-                	mail.sendSubmissionConfirmationMail(result, req.body.emailTemplate, req.body.emailSubject, req.body.submittedData, req.body.titles, req.site);
+                	//mail.sendSubmissionConfirmationMail(result, req.body.emailTemplate, req.body.emailSubject, req.body.submittedData, req.body.titles, req.site);
                 	mail.sendSubmissionAdminMail(result, req.body.emailTemplate, req.body.emailSubjectAdmin, req.body.submittedData, req.body.titles, req.site);
                 }
 			})

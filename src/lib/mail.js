@@ -169,7 +169,7 @@ function sendSubmissionConfirmationMail( submission, template, emailSubject, sub
     const attachments = ( site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.attachments ) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.attachments )  || ['logo.png'];
     
     sendMail({
-        to: data.submission.submittedData.bc_email,
+        to: data.submission.submittedData.email,
         from: (site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.from) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.from ) || config.email,
         replyTo: (site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.replyTo) ? site.config.ideas.feedbackEmail.replyTo : null,
         subject: emailSubject || 'Bedankt voor je inzending',
