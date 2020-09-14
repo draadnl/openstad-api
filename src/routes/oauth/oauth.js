@@ -13,10 +13,16 @@ let router = express.Router({mergeParams: true});
  * Check if redirectURI same host as registered
  */
 const isAllowedRedirectDomain = (url, allowedDomains) => {
+	console.log ('isAllowedRedirectDomain url', url);
+	console.log ('isAllowedRedirectDomain allowedDomains', allowedDomains);
 	let redirectUrlHost = '';
 	try {
 		redirectUrlHost = new URL(url).hostname;
-	} catch(err) {}
+	} catch(err) {
+		console.error('isAllowedRedirectDomain error caught', err);
+	}
+	
+	console.log ('isAllowedRedirectDomain redirectUrlHost', redirectUrlHost);
 
 	// throw error if allowedDomains is empty or the redirectURI's host is not present in the allowed domains
 	return allowedDomains && allowedDomains.indexOf(redirectUrlHost) !== -1;
