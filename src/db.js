@@ -23,6 +23,13 @@ if (dbConfig.mysqlSTGeoMode) {
 	}
 }
 
+console.log ('DB CONFIG', dbConfig);
+
+console.log ('ENV VALUES',
+process.env.API_DATABASE_USER,
+process.env.API_DATABASE_PASSWORD,
+process.env.API_DATABASE_DATABASE,
+process.env.API_DATABASE_HOST);
 
 var sequelize = new Sequelize(dbConfig.database, dbConfig.user, dbConfig.password, {
 	dialect        : dbConfig.dialect,

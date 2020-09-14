@@ -330,4 +330,6 @@ try {
 	//console.log('err', err);
 };
 
+console.log ('DEFAULT CONFIG', defaultConfig, 'DB HOST::', process.env.API_DATABASE_HOST );
+
 module.exports = defaultConfig;
