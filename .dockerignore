@@ -5,3 +5,5 @@ Dockerfile
 data
 node_modules
 .env
+/config/local.*
+/config/test.*
