@@ -198,6 +198,9 @@ router.route('/*')
 	.post(function(req, res, next) {
 		if (req.site.config.votes.voteType != 'likes') return next();
 
+		// skip check
+		return next();
+		
 		if (req.site.config.votes.voteType == 'likes' && req.site.config.votes.requiredUserRole == 'anonymous') {
 			req.votes.forEach((vote) => {
 				// check if votes exists for same opinion on the same IP within 5 minutes
