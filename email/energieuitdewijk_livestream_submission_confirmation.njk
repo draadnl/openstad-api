@@ -119,13 +119,13 @@
 							<tr>
 								<td style="border: solid 3px #fdc633;">
 									<div style="padding: 20px; font-size: 12px;">
-									<strong>Naam</strong>
+									<strong>Naam</strong><br />
 									{{ submittedData['Naam'] | safe }}
 									<br /><br />
-									<strong>E-mailadres</strong>
+									<strong>E-mailadres</strong><br />
 									{{ submittedData['E-mailadres'] | safe }}
 									<br /><br />
-									<strong>Geïnteresseerd in het initiatief (optioneel)</strong>
+									<strong>Geïnteresseerd in het initiatief (optioneel)</strong><br />
 									{% if submittedData and submittedData['Initiatief'] %}
 									{{ submittedData['Initiatief'] | safe }}
 									{% else %}
