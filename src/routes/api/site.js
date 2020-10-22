@@ -28,7 +28,7 @@ router.route('/')
 
 // create site
 // -----------
-	//.post(auth.can('site:create'))
+	.post(auth.can('site:create'))
 	.post(function(req, res, next) {
 		db.Site
 			.create(req.body)
