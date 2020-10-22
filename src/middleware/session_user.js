@@ -42,6 +42,7 @@ module.exports = function getSessionUser( req, res, next ) {
 
 		// auth token overrules other settings
 		let tokens = config && config.authorization && config.authorization['fixed-auth-tokens'];
+		console.log ('fixed auth tokens', tokens, req.headers['x-authorization']);
 		if (tokens) {
 			tokens.forEach((token) => {
 				if ( token.token == req.headers['x-authorization'] ) {
@@ -50,6 +51,8 @@ module.exports = function getSessionUser( req, res, next ) {
 				}
 			});
 		}
+		
+		console.log ('userId fixed auth token', userId);
 
 	}
 
