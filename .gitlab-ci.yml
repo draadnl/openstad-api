@@ -20,10 +20,10 @@ build:
   when: manual
   script:
     - docker info
-    - docker build -t ${DOCKER_PUBLIC_USERNAME}/${DOCKER_IMAGE_NAME}:${CI_JOB_ID} .
-    - docker run -e CI=true ${DOCKER_PUBLIC_USERNAME}/${DOCKER_IMAGE_NAME}:${CI_JOB_ID} env npm run test -- --coverage
+    - docker build -t ${DOCKER_PUBLIC_USERNAME}/${DOCKER_IMAGE_NAME}:${CI_PIPELINE_ID} .
+    - docker run -e CI=true ${DOCKER_PUBLIC_USERNAME}/${DOCKER_IMAGE_NAME}:${CI_PIPELINE_ID} env npm run test -- --coverage
     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin;
-    - docker push ${DOCKER_PUBLIC_USERNAME}/${DOCKER_IMAGE_NAME}:${CI_JOB_ID}
+    - docker push ${DOCKER_PUBLIC_USERNAME}/${DOCKER_IMAGE_NAME}:${CI_PIPELINE_ID}
 
 deploy:
   stage: deploy
@@ -35,4 +35,4 @@ deploy:
     - sudo mv ./kubectl /usr/local/bin/kubectl
     - mkdir ${HOME}/.kube
     - echo "$KUBE_CONFIG" | base64 --decode > ${HOME}/.kube/config
-    - kubectl set image deployment/${K8S_DEPLOYMENT_NAME} ${K8S_DEPLOYMENT_NAME}=${DOCKER_PUBLIC_USERNAME}/${DOCKER_IMAGE_NAME}:${CI_JOB_ID} --record -n ${K8S_NAMESPACE}
+    - kubectl set image deployment/${K8S_DEPLOYMENT_NAME} ${K8S_DEPLOYMENT_NAME}=${DOCKER_PUBLIC_USERNAME}/${DOCKER_IMAGE_NAME}:${CI_PIPELINE_ID} --record -n ${K8S_NAMESPACE}
