@@ -1,3 +1,5 @@
+image: alpine:3.7
+
 stages:
   - build
   - test
@@ -39,7 +41,6 @@ release:
 
 deploy:
   stage: deploy
-  image: alpine:3.7
   when: manual
   script:
     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin;
