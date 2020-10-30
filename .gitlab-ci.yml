@@ -1,13 +1,11 @@
-image: alpine:3.7
+image: docker:git
+
+services:
+  - docker:dind
 
 stages:
   - build
-  - test
-  - release
   - deploy
-
-services:
-  - docker
 
 variables:
   DOCKER_PUBLIC_USERNAME: openstad
@@ -17,25 +15,13 @@ variables:
   STAGING_BRANCH: develop
   RELEASE_BRANCH: master
 
-before_script:
-  - docker info
-
 build:
   stage: build
   when: manual
   script:
+    - docker info
     - docker build -t ${DOCKER_PUBLIC_USERNAME}/${DOCKER_IMAGE_NAME}:${CI_JOB_ID} .
-
-test:
-  stage: test
-  when: manual
-  script:
     - docker run -e CI=true ${DOCKER_PUBLIC_USERNAME}/${DOCKER_IMAGE_NAME}:${CI_JOB_ID} env npm run test -- --coverage
-
-release:
-  stage: release
-  when: manual
-  script:
     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin;
     - docker push ${DOCKER_PUBLIC_USERNAME}/${DOCKER_IMAGE_NAME}:${CI_JOB_ID}
 
