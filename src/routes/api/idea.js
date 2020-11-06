@@ -42,14 +42,6 @@ router
 		if (req.query.includeArgsCount) {
 			req.scope.push('includeArgsCount');
 		}
-
-		if (req.query.includeTags) {
-			req.scope.push('includeTags');
-		}
-
-		if (req.query.includePoll) {
-			req.scope.push({ method: ['includePoll', req.user.id]});
-		}
 		
 		if (req.query.includeMeeting) {
 			req.scope.push('includeMeeting');
