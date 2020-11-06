@@ -630,6 +630,17 @@ module.exports = function( db, sequelize, DataTypes ) {
         },
       },
 
+			includeArgsCount: {
+        include: [{
+          model: db.Site,
+        }],
+        attributes: {
+          include: [
+            argCount('argCount')
+          ]
+        }
+      },
+			
 			includeUser: {
 				include: [{
 					model      : db.User,
