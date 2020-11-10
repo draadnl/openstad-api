@@ -20,7 +20,7 @@ module.exports = function( req, res, next ) {
 	if (config.dev && config.dev['Header-Access-Control-Allow-Origin']) {
     res.header('Access-Control-Allow-Origin', config.dev['Header-Access-Control-Allow-Origin'] );
   } else {
-    res.header('Access-Control-Allow-Origin', url );
+    res.header('Access-Control-Allow-Origin', '*' );
   }
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,PATCH');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With, x-http-method-override, X-GRIP-Tenant-Id, X-Authorization, X-Forwarded-For');
