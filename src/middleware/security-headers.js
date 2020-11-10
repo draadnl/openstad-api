@@ -9,9 +9,8 @@ module.exports = function( req, res, next ) {
 	try {
 		domain = new URL(url).hostname;
 	} catch(err) {}
-	
+
 	let allowedDomains = (req.site && req.site.config && req.site.config.allowedDomains) || config.allowedDomains;
-	console.log ('>>> CORS', allowedDomains, domain, req.headers && req.headers.origin, url, req.headers, req.method);
 	if ( !allowedDomains || allowedDomains.indexOf(domain) === -1) {
 		const protocol = req.headers['x-forwarded-proto'] || req.protocol;
 		url = config.url || protocol + '://' + req.hostname;
@@ -20,10 +19,10 @@ module.exports = function( req, res, next ) {
 	if (config.dev && config.dev['Header-Access-Control-Allow-Origin']) {
     res.header('Access-Control-Allow-Origin', config.dev['Header-Access-Control-Allow-Origin'] );
   } else {
-    res.header('Access-Control-Allow-Origin', '*' );
+    res.header('Access-Control-Allow-Origin', url );
   }
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,PATCH');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With, x-http-method-override, X-GRIP-Tenant-Id, X-Authorization, X-Forwarded-For, Referer, User-Agent');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With, x-http-method-override, X-GRIP-Tenant-Id, X-Authorization, X-Forwarded-For');
   res.header('Access-Control-Allow-Credentials', 'true');
 
 	if (process.env.NODE_ENV != 'development') {
@@ -38,7 +37,7 @@ module.exports = function( req, res, next ) {
 	}
 
 	if (req.method == 'OPTIONS') {
-		return res.status(204).end();
+		return res.end();
 	}
 
 	return next();

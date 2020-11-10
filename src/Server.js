@@ -83,7 +83,7 @@ module.exports  = {
 		const sessionSite = require('./middleware/site');
 		this.app.use(sessionSite);
 
-		//this.app.use(require('./middleware/security-headers'));
+		this.app.use(require('./middleware/security-headers'));
 
 		this.app.use(bodyParser.json({limit: '10mb'}));
 		this.app.use(bodyParser.urlencoded({limit: '10mb', extended: true}));
