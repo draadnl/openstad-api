@@ -11,7 +11,7 @@ module.exports = function( req, res, next ) {
 	} catch(err) {}
 	
 	let allowedDomains = (req.site && req.site.config && req.site.config.allowedDomains) || config.allowedDomains;
-	console.log ('>>> CORS', allowedDomains, domain, req.headers && req.headers.origin, url);
+	console.log ('>>> CORS', allowedDomains, domain, req.headers && req.headers.origin, url, req.headers);
 	if ( !allowedDomains || allowedDomains.indexOf(domain) === -1) {
 		const protocol = req.headers['x-forwarded-proto'] || req.protocol;
 		url = config.url || protocol + '://' + req.hostname;
