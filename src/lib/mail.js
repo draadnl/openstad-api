@@ -103,7 +103,13 @@ function sendNotificationMail( data ) {
 
 // send email to user that submitted an idea
 function sendThankYouMail( idea, user, site ) {
-
+  
+  let doSendMail = (site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.send) || true;
+  
+  if (!doSendMail) {
+    return;
+  }
+  
   let url = ( site && site.config.cms && site.config.cms.url ) || ( config && config.url );
   let hostname = ( site && site.config.cms && site.config.cms.hostname ) || ( config && config.hostname );
   let sitename = ( site && site.title ) || ( config && config.get('siteName') );
