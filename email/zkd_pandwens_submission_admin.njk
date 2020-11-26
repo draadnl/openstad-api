@@ -127,8 +127,10 @@ Lees hieronder de ingevoerde informatie.
                                             <ul>
                                             {% for innerKey, innerValue in value %}
                                                 {% if innerValue != 'anders' %}
-                                                    {% if innerKey == 'Anders, namelijk' and innerValue %}
-                                                        <li>Anders, namelijk: {{ innerValue | safe }}</li>
+                                                    {% if innerKey == 'Anders, namelijk' %}
+                                                        {% if innerValue %}
+                                                            <li>Anders, namelijk: {{ innerValue | safe }}</li>
+                                                        {% endif %}
                                                     {% else %}
                                                         {% if innerValue and innerValue.indexOf('http') != -1 %}
                                                             <li><a href="{{ innerValue | safe }}" target="_blank">Bestand {{ (innerKey + 1) }}: Download hier</a></li>
