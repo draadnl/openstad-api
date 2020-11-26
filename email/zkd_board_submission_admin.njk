@@ -128,7 +128,7 @@ Lees hieronder de ingevoerde informatie.
                                             <ul>
                                             {% for innerKey, innerValue in value %}
                                                 {% if innerValue != 'anders' %}
-                                                    {% if innerKey == 'Anders, namelijk' %}
+                                                    {% if innerKey == 'Anders, namelijk' and innerValue %}
                                                         <li>Anders, namelijk: {{ innerValue | safe }}</li>
                                                     {% else %}
                                                         {% if innerValue and innerValue.indexOf('http') != -1 %}
