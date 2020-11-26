@@ -19,6 +19,7 @@ var env = nunjucks.configure('email');
 var dateFilter   = require('../lib/nunjucks-date-filter');
 dateFilter.setDefaultFormat('DD-MM-YYYY HH:mm');
 env.addFilter('date', dateFilter);
+env.addFilter('isObj', (something) => { return typeof something == 'object' });
 //env.addFilter('duration', duration);
 
 // Global variables.
