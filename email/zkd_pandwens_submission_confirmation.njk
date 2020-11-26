@@ -120,7 +120,7 @@
 								<td style="border: solid 3px #fdc633;">
 									<div style="padding: 20px; font-size: 12px;">
 									{% for fieldKey, value in submittedData %}
-									    {% if typeof value == 'object' %}
+									    {% if value and typeof value == 'object' %}
 
                                             <strong>{{ innerKey }}</strong><br />
                                             <ul>
