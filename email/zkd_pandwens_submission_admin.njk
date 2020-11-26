@@ -123,20 +123,21 @@ Lees hieronder de ingevoerde informatie.
 									{% for fieldKey, value in submittedData %}
 									    {% if typeof value == 'object' %}
 
-                                        <strong>{{ innerKey }}</strong><br />
-                                        <ul>
-									    {% for innerKey, innerValue in value %}
-									        {% if innerValue != 'anders' %}
-									            {% if innerKey == 'Anders, namelijk' %}
-                                                    <li>Anders, namelijk: {{ innerValue | safe }}</li>
-									            {% else %}
-                                                    <li>{{ innerValue | safe }}</li>
+                                            <strong>{{ innerKey }}</strong><br />
+                                            <ul>
+                                            {% for innerKey, innerValue in value %}
+                                                {% if innerValue != 'anders' %}
+                                                    {% if innerKey == 'Anders, namelijk' %}
+                                                        <li>Anders, namelijk: {{ innerValue | safe }}</li>
+                                                    {% else %}
+                                                        <li>{{ innerValue | safe }}</li>
+                                                    {% endif %}
                                                 {% endif %}
-                                            {% endif %}
-                                        </ul>
-                                            <br />
-                                            <br />
-									    {% else %}
+                                            {% endfor %}
+                                            </ul>
+                                                <br />
+                                                <br />
+                                        {% else %}
                                             <strong>{{ fieldKey }}</strong><br />
                                             {% if value and value.indexOf('http') != -1 %}
                                                 <a href="{{ value | safe }}" target="_blank">Bekijk hier</a>
