@@ -129,7 +129,7 @@
                                                     {% if innerKey == 'Anders, namelijk' %}
                                                         <li>Anders, namelijk: {{ innerValue | safe }}</li>
                                                     {% else %}
-                                                        {% if value and value.indexOf('http') != -1 %}
+                                                        {% if innerValue and innerValue.indexOf('http') != -1 %}
                                                             <li><a href="{{ innerValue | safe }}" target="_blank">Bestand {{ innerKey + 1 }}: Download hier</a></li>
                                                         {% else %}
                                                             <li>{{ innerValue | safe }}</li>
