@@ -134,7 +134,7 @@ Lees hieronder de ingevoerde informatie.
                                                         {% endif %}
                                                     {% else %}
                                                         {% if innerValue and innerValue.indexOf('http') != -1 %}
-                                                            <li><a href="{{ innerValue | safe }}" target="_blank">Bestand {{ (innerKey + 1) }}: Download hier</a></li>
+                                                            <li>Bestand {{ innerKey | plusone }}: <a href="{{ innerValue | safe }}" target="_blank">Download hier</a></li>
                                                         {% else %}
                                                             <li>{{ innerValue | safe }}</li>
                                                         {% endif %}

@@ -20,6 +20,7 @@ var dateFilter   = require('../lib/nunjucks-date-filter');
 dateFilter.setDefaultFormat('DD-MM-YYYY HH:mm');
 env.addFilter('date', dateFilter);
 env.addFilter('isObj', (something) => { return typeof something == 'object' });
+env.addFilter('plusOne', (string) => { return parseInt(string) + 1 });
 //env.addFilter('duration', duration);
 
 // Global variables.
