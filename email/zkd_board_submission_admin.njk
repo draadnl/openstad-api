@@ -121,7 +121,7 @@ Lees hieronder de ingevoerde informatie.
 							<tr>
 								<td style="border: solid 3px #fdc633;">
 									<div style="padding: 20px; font-size: 12px;">
-									{{% for fieldKey, value in submittedData %}
+									{% for fieldKey, value in submittedData %}
 									    {% if (value | isObj) %}
 
                                             <strong>{{ fieldKey }}</strong><br />
@@ -131,7 +131,11 @@ Lees hieronder de ingevoerde informatie.
                                                     {% if innerKey == 'Anders, namelijk' %}
                                                         <li>Anders, namelijk: {{ innerValue | safe }}</li>
                                                     {% else %}
-                                                        <li>{{ innerValue | safe }}</li>
+                                                        {% if value and value.indexOf('http') != -1 %}
+                                                            <li><a href="{{ innerValue | safe }}" target="_blank">Bestand {{ innerKey + 1 }}: Download hier</a></li>
+                                                        {% else %}
+                                                            <li>{{ innerValue | safe }}</li>
+                                                        {% endif %}
                                                     {% endif %}
                                                 {% endif %}
                                             {% endfor %}
