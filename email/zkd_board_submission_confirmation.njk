@@ -120,10 +120,31 @@
 								<td style="border: solid 3px #fdc633;">
 									<div style="padding: 20px; font-size: 12px;">
 									{% for fieldKey, value in submittedData %}
-										<strong>{{ fieldKey }}</strong><br />
-										{{ value | safe }}
-										<br />
-										<br />
+									    {% if typeof value == 'object' %}
+
+                                        <strong>{{ innerKey }}</strong><br />
+                                        <ul>
+									    {% for innerKey, innerValue in value %}
+									        {% if innerValue != 'anders' %}
+									            {% if innerKey == 'Anders, namelijk' %}
+                                                    <li>Anders, namelijk: {{ innerValue | safe }}</li>
+									            {% else %}
+                                                    <li>{{ innerValue | safe }}</li>
+                                                {% endif %}
+                                            {% endif %}
+                                        </ul>
+                                            <br />
+                                            <br />
+									    {% else %}
+                                            <strong>{{ fieldKey }}</strong><br />
+                                            {% if value and value.indexOf('http') != -1 %}
+                                                <a href="{{ value | safe }}" target="_blank">Bekijk hier</a>
+                                            {% else %}
+                                                {{ value | safe }}
+                                            {% endif %}
+                                            <br />
+                                            <br />
+										{% endif %}
 									{% endfor %}
 									</div>
 								</td>
