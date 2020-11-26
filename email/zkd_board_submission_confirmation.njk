@@ -122,7 +122,7 @@
 									{% for fieldKey, value in submittedData %}
 									    {% if (value | isObj) %}
 
-                                            <strong>{{ innerKey }}</strong><br />
+                                            <strong>{{ fieldKey }}</strong><br />
                                             <ul>
                                             {% for innerKey, innerValue in value %}
                                                 {% if innerValue != 'anders' %}
