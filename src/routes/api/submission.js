@@ -7,6 +7,29 @@ const moment = require('moment-timezone');
 
 let router = express.Router({mergeParams: true});
 
+router.route('/:formId([a-zA-Z0-9\-\_]*)/count')
+	.get(function (req, res, next) {
+		let formId = req.params.formId.replace('/', ''),
+		where = { formId };
+		
+		req.scope = ['defaultScope'];
+		//req.scope.push({method: ['forSiteId', req.params.siteId]});
+
+		db.Submission
+			.scope(...req.scope)
+			.findAll({ where })
+			.then( found => {
+				found.filter(function (submission) {
+					return submission.siteId == req.params.siteId;
+				})
+				return found.length;
+			})
+			.then(function( found ) {
+				res.json({count: found});
+			})
+			.catch(next);
+	});
+
 router.route('/:formId([a-zA-Z0-9\-\_]*)')
 // list submissions
 // --------------
