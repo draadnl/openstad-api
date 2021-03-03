@@ -104,6 +104,38 @@ router.route('/')
 // create submission
 // ---------------
   .post(auth.can('submissions:create'))
+	.post(function (req, res, next) {
+		const blocklist = [
+			"usmannasir2726@gmail.com",
+			"lecyberzilla1@wearehackerone.com"
+		];
+		
+		if (req.body.submittedData) {
+			let proceed         = true;
+			const submittedData = Object.values(req.body.submittedData);
+			
+			// There are no forms with more than 50 fields
+			if (submittedData.length > 50) {
+				req.body.sendMail = false;
+				return next();
+			}
+			
+			// Check for blocklist emails in submitted data
+			submittedData.some(function (data) {
+				return blocklist.some(function (email) {
+					if (data.indexOf(email) > -1) {
+						req.body.sendMail = false;
+						return true;
+					}
+					
+					return false;
+				});
+			});
+			
+		}
+		
+		return next();
+	})
 	.post(function(req, res, next) {
 		let data = {
 			submittedData     : req.body.submittedData,
