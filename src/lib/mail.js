@@ -89,6 +89,8 @@ function sendThankYouMail (resource, resourceType, user) {
   
   if (!resourceType) return console.error('sendThankYouMail error: resourceType not provided');
   
+  console.log ('====> thank you mail siteconfig log', siteConfig.config, resourceType, siteConfig.getFeedbackEmailFrom(resourceType), siteConfig.getResourceFeedbackEmail(resourceType));
+  
   const url         = siteConfig.getCmsUrl();
   const hostname    = siteConfig.getCmsHostname();
   const sitename    = siteConfig.getTitle();
