@@ -712,7 +712,7 @@ module.exports = function( db, sequelize, DataTypes ) {
 	Article.auth = Article.prototype.auth = {
     listableBy: 'all',
     viewableBy: 'all',
-    createableBy: 'editor',
+    createableBy: ['editor', 'member'],
     updateableBy: ['editor','owner'],
     deleteableBy: ['editor','owner'],
     canUpdate: canMutate,
