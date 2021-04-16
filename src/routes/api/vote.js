@@ -252,6 +252,9 @@ router.route('/*')
 
   // validaties voor voteType=likes
 	.post(function(req, res, next) {
+		
+		console.log ('====> API vote check', req.headers, req.socket.remoteAddress);
+		
 		if (req.site.config.votes.voteType != 'likes') return next();
 
 		if (req.site.config.votes.voteType == 'likes' && req.site.config.votes.requiredUserRole == 'anonymous') {
