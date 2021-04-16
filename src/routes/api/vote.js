@@ -191,6 +191,11 @@ router.route('/*')
 	.post(function(req, res, next) {
 		let votes = req.body || [];
 		if (!Array.isArray(votes)) votes = [votes];
+		
+		const ip = req.headers['x-original-forwarded-for'] || req.headers['x-forwarded-for'];
+		
+		console.log ('====> API vote check IP', ip, req.headers);
+		
 		votes = votes.map((entry) => {
 			return {
 				ideaId: parseInt(entry.ideaId, 10),
@@ -198,7 +203,7 @@ router.route('/*')
 				userId: req.user.id,
 				confirmed: false,
 				confirmReplacesVoteId: null,
-				ip: req.ip,
+				ip: ip,
 				checked: null,
 			}
 		});
@@ -218,7 +223,7 @@ router.route('/*')
                 userId: req.user.id,
                 confirmed: false,
                 confirmReplacesVoteId: null,
-                ip: req.ip,
+                ip: ip,
                 checked: null,
               }
               return oldVote
@@ -252,8 +257,6 @@ router.route('/*')
 
   // validaties voor voteType=likes
 	.post(function(req, res, next) {
-		
-		console.log ('====> API vote check', req.headers, req.socket.remoteAddress);
 		
 		if (req.site.config.votes.voteType != 'likes') return next();
 
