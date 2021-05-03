@@ -1423,6 +1423,16 @@ module.exports = function (db, sequelize, DataTypes) {
       if (!canMutate(user, self) && data.extraData && data.extraData.phone) {
 		    delete data.extraData.phone;
 	    }
+      
+      // Remove extraData keys which start with 'hidden_'
+      // @todo: Solve this in a generic & reusable way
+      if (data.extraData && typeof data.extraData == 'object') {
+        Object.keys(data.extraData).forEach((k) => {
+          if (k && k.toLowerCase().startsWith('hidden_')) {
+            delete data.extraData[k];
+          }
+        });
+      }
 
       if (data.argumentsAgainst) {
         data.argumentsAgainst = hideEmailsForNormalUsers(data.argumentsAgainst);
