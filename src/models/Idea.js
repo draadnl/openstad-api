@@ -1428,7 +1428,7 @@ module.exports = function (db, sequelize, DataTypes) {
       // @todo: Solve this in a generic & reusable way
       if (data.extraData && typeof data.extraData == 'object') {
         Object.keys(data.extraData).forEach((k) => {
-          if (k && k.toLowerCase().startsWith('hidden_')) {
+          if (k && k.toLowerCase().startsWith('hidden_') && !canMutate(user, self)) {
             delete data.extraData[k];
           }
         });
