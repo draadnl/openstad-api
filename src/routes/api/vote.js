@@ -261,6 +261,12 @@ router.route('/*')
 		if (req.site.config.votes.voteType != 'likes') return next();
 
 		if (req.site.config.votes.voteType == 'likes' && req.site.config.votes.requiredUserRole == 'anonymous') {
+			
+			// Allow the IP check to be skipped from the site config
+			if (req.site.config.votes && req.site.config.votes.skipIpCheck) {
+				return next();
+			}
+			
 			req.votes.forEach((vote) => {
 				// check if votes exists for same opinion on the same IP within 5 minutes
 				const whereClause = {
