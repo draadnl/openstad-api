@@ -192,7 +192,7 @@ router.route('/*')
 		let votes = req.body || [];
 		if (!Array.isArray(votes)) votes = [votes];
 		
-		const ip = req.headers['x-original-forwarded-for'] || req.headers['x-forwarded-for'];
+		const ip = req.headers['x-original-forwarded-for'] || req.headers['x-forwarded-for'] || req.ip;
 		
 		console.log ('====> API vote check IP', ip, req.headers);
 		
