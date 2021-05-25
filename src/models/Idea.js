@@ -11,9 +11,9 @@ var notifications = require('../notifications');
 
 const merge = require('merge');
 
-var argVoteThreshold = config.ideas && config.ideas.argumentVoteThreshold;
-const userHasRole = require('../lib/sequelize-authorization/lib/hasRole');
-const roles = require('../lib/sequelize-authorization/lib/roles');
+var argVoteThreshold     = config.ideas && config.ideas.argumentVoteThreshold;
+const userHasRole        = require('../lib/sequelize-authorization/lib/hasRole');
+const roles              = require('../lib/sequelize-authorization/lib/roles');
 const getExtraDataConfig = require('../lib/sequelize-authorization/lib/getExtraDataConfig');
 const hasModeratorRights = (user) => {
   return userHasRole(user, 'editor', self.userId) || userHasRole(user, 'admin', self.userId) || userHasRole(user, 'moderator', self.userId);
@@ -386,6 +386,18 @@ module.exports = function (db, sequelize, DataTypes) {
         }
       }
     },
+    
+    publishedAt: {
+      type: DataTypes.DATE
+    },
+    
+    isPublished: {
+      type: DataTypes.VIRTUAL,
+      get: function () {
+        var date = this.getDataValue('publishedAt');
+        return !!date;
+      }
+    },
 
   }, {
 
@@ -606,20 +618,37 @@ module.exports = function (db, sequelize, DataTypes) {
       onlyVisible: function (userId, userRole) {
         if (userId) {
           return {
-            where: sequelize.or(
-              { userId },
-              { viewableByRole: 'all' },
-              { viewableByRole: null },
-              { viewableByRole: roles[userRole] || '' },
-            )
+            where: sequelize.and([
+              sequelize.or(
+                {
+                  publishedAt: {
+                    [Sequelize.Op.not]: null
+                  }
+                },
+                { userId }
+              ),
+              sequelize.or(
+                { userId },
+                { viewableByRole: 'all' },
+                { viewableByRole: null },
+                { viewableByRole: roles[userRole] || '' },
+              )
+            ])
           };
         } else {
           return {
-            where: sequelize.or(
-              { viewableByRole: 'all' },
-              { viewableByRole: null },
-              { viewableByRole: roles[userRole] || '' },
-            )
+            where: sequelize.and([
+              {
+                publishedAt: {
+                  [Sequelize.Op.not]: null
+                }
+              },
+              sequelize.or(
+                { viewableByRole: 'all' },
+                { viewableByRole: null },
+                { viewableByRole: roles[userRole] || '' },
+              )
+            ])
           };
         }
       },
@@ -750,6 +779,36 @@ module.exports = function (db, sequelize, DataTypes) {
         )
       },
 
+      onlyUser: function (filterUserId, userId, userRole) {
+        console.log (filterUserId, userId, userRole);
+        if (userId && userId === filterUserId || userRole && ['admin', 'moderator'].includes(userRole)) {
+          return {
+            where: sequelize.and(
+              {userId: filterUserId},
+              sequelize.or(
+                {
+                  publishedAt: {
+                    [Sequelize.Op.not]: null
+                  }
+                },
+                {
+                  publishedAt: {
+                    [Sequelize.Op.eq]: null
+                  }
+                },
+              )
+              
+            )
+          };
+        }
+        
+        return {
+          where: {
+            userId: filterUserId
+          }
+        };
+      },
+      
       includeArguments: function (userId) {
         return {
           include: [{

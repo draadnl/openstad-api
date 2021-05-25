@@ -96,6 +96,11 @@ router
     if (req.query.includeUser) {
       req.scope.push('includeUser');
     }
+    
+    if (req.query.user) {
+      console.log ('user given in query', parseInt(req.query.user));
+      req.scope.push({method: ['onlyUser', parseInt(req.query.user), req.user.id, req.user.role]});
+    }
 
     // todo? volgens mij wordt dit niet meer gebruikt
     // if (req.query.highlighted) {
