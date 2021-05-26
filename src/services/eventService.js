@@ -31,13 +31,16 @@ const publish = async (notificationRuleSet, siteId, ruleSetData) => {
   const ruleSets = await notificationRuleSet
     .scope('includeTemplate', 'includeRecipients')
     .findAll({where: { siteId, active: 1}})
+
+  console.log(ruleSets);
+
   ruleSets.forEach((ruleset) => {
     const rulesetString = ruleset.body;
-
+    console.log('is valid json: ', isJson(rulesetString))
     if(!isJson(rulesetString)){
       return false;
     }
-
+    console.log('match json logic: ', jsonLogic.apply(JSON.parse(rulesetString), ruleSetData))
     if (jsonLogic.apply(JSON.parse(rulesetString), ruleSetData)) {
       const { notification_template, notification_recipients } = ruleset;
 
