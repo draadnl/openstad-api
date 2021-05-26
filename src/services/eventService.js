@@ -1,5 +1,6 @@
 const jsonLogic = require('json-logic-js');
 const notificationService = require('./notificationService')
+const log = require('debug')('event:publish');
 
 // Todo: move to helper or util file
 /**
@@ -26,10 +27,10 @@ function isJson(str) {
  * @returns {Promise<void>}
  */
 const publish = async (notificationRuleSet, siteId, ruleSetData) => {
+  console.log(notificationRuleSet, siteId, ruleSetData)
   const ruleSets = await notificationRuleSet
     .scope('includeTemplate', 'includeRecipients')
     .findAll({where: { siteId, active: 1}})
-
   ruleSets.forEach((ruleset) => {
     const rulesetString = ruleset.body;
 
@@ -59,6 +60,8 @@ const publish = async (notificationRuleSet, siteId, ruleSetData) => {
         template: notification_template.templateFile,
         ...ruleSetData.instance.get()
       }
+
+      console.log(emailData, recipients)
 
       // Todo: instead of directly notify we should use a decent queue
       recipients
