@@ -396,6 +396,16 @@ module.exports = function (db, sequelize, DataTypes) {
       get: function () {
         var date = this.getDataValue('publishedAt');
         return !!date;
+      },
+      
+      set: function (publish) {
+        if (publish) {
+          if (!this.getDataValue('publishedAt')) {
+            this.setDataValue('publishedAt', sequelize.fn('CURRENT_TIMESTAMP'));
+          }
+        } else {
+          this.setDataValue('publishedAt', null);
+        }
       }
     },
 
