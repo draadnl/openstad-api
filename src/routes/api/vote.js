@@ -191,6 +191,9 @@ router.route('/*')
 	.post(function(req, res, next) {
 		let votes = req.body || [];
 		if (!Array.isArray(votes)) votes = [votes];
+		
+		const ip = req.headers['x-original-forwarded-for'] || req.headers['x-forwarded-for'] || req.ip;
+		
 		votes = votes.map((entry) => {
 			return {
 				ideaId: parseInt(entry.ideaId, 10),
@@ -198,7 +201,7 @@ router.route('/*')
 				userId: req.user.id,
 				confirmed: false,
 				confirmReplacesVoteId: null,
-				ip: req.ip,
+				ip: ip,
 				checked: null,
 			}
 		});
@@ -218,7 +221,7 @@ router.route('/*')
                 userId: req.user.id,
                 confirmed: false,
                 confirmReplacesVoteId: null,
-                ip: req.ip,
+                ip: ip,
                 checked: null,
               }
               return oldVote
