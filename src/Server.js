@@ -21,7 +21,7 @@ module.exports  = {
 
       this.app = express();
       this.app.disable('x-powered-by');
-      this.app.set('trust proxy', true);
+      this.app.set('trust proxy', 'loopback, uniquelocal');
       this.app.set('view engine', 'njk');
       this.app.set('env', process.env.NODE_APP_INSTANCE || 'development');
 

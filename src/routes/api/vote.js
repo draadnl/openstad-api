@@ -192,6 +192,8 @@ router.route('/*')
 		let votes = req.body || [];
 		if (!Array.isArray(votes)) votes = [votes];
 		
+		console.log ('<=== Check headers', req.headers, req.ip);
+		
 		const ip = req.headers['x-original-forwarded-for'] || req.headers['x-forwarded-for'] || req.ip;
 		
 		votes = votes.map((entry) => {
