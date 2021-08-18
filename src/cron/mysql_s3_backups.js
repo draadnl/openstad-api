@@ -9,6 +9,8 @@ const s3 = require('../services/awsS3');
 // Runs every night at 1:00.
 const backupMysqlToS3 = async () => {
   const dbsToBackup = process.env.S3_DBS_TO_BACKUP ? process.env.S3_DBS_TO_BACKUP.split(',') : false;
+  const isOnK8s = !!process.env.KUBERNETES_NAMESPACE;
+  const namespace = process.env.KUBERNETES_NAMESPACE;
 
   if (dbsToBackup) {
     dbsToBackup.forEach(async function(dbName) {
@@ -31,9 +33,11 @@ const backupMysqlToS3 = async () => {
 
       const created = moment().format('YYYY-MM-DD hh:mm:ss')
 
+      const key = isOnK8s ? `mysql/${namespace}/${dbName}_${created}sql` : `mysql/${dbName}_${created}sql`;
+
       var params = {
           Bucket: process.env.S3_BUCKET,
-          Key: 'mysql/' + dbName + '_' + created + ".sql",
+          Key: key,
           Body: result.dump.data,
           ACL: "private"
       };
