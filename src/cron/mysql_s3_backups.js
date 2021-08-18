@@ -1,13 +1,6 @@
-const AWS = require('aws-sdk');
-const fs = require('fs'); // Needed for example below
 const mysqldump = require('mysqldump');
 const moment = require('moment')
-
-
-var Promise = require('bluebird');
-
-var log     = require('debug')('app:cron');
-var db      = require('../db');
+const s3 = require('../services/awsS3');
 
 // Purpose
 // -------
@@ -36,15 +29,7 @@ const backupMysqlToS3 = async () => {
           }
       });
 
-      const spacesEndpoint = new AWS.Endpoint(process.env.S3_ENDPOINT);
-
       const created = moment().format('YYYY-MM-DD hh:mm:ss')
-
-      const s3 = new AWS.S3({
-          endpoint: spacesEndpoint,
-          accessKeyId: process.env.S3_KEY,
-          secretAccessKey: process.env.S3_SECRET
-      });
 
       var params = {
           Bucket: process.env.S3_BUCKET,
