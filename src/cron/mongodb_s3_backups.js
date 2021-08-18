@@ -7,7 +7,9 @@ const backupMongoDBToS3 = async () => {
     if (process.env.S3_MONGO_BACKUPS === 'ON') {
       const host = process.env.MONGO_DB_HOST || 'localhost';
       const port = process.env.MONGO_DB_PORT || 27017;
-      const tmpDbFile = 'db_mongo'
+      const tmpDbFile = 'db_mongo';
+      const isOnK8s = !!process.env.KUBERNETES_NAMESPACE;
+      const namespace = process.env.KUBERNETES_NAMESPACE;
 
       // Default command, does not considers username or password
       let command = `mongodump -h ${host} --port=${port} --archive=${tmpDbFile}`;
@@ -26,9 +28,10 @@ const backupMongoDBToS3 = async () => {
             const created = moment().format('YYYY-MM-DD hh:mm:ss')
             const fileContent = fs.readFileSync(tmpDbFile);
 
+            const key = isOnK8s ? `mongodb/${namespace}/mongo_${created}` : `mongodb/mongo_${created}`;
             var params = {
                 Bucket: process.env.S3_BUCKET,
-                Key: "mongodb/mongo_" + created,
+                Key: key,
                 Body: fileContent,
                 ACL: "private"
             };
