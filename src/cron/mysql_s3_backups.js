@@ -41,8 +41,10 @@ const backupMysqlToS3 = async () => {
           Body: result.dump.data,
           ACL: "private"
       };
+      
+      const client = s3.getClient();
 
-      s3.putObject(params, function(err, data) {
+      client.putObject(params, function(err, data) {
           if (err) console.log(err, err.stack);
           else     console.log(data);
       });
