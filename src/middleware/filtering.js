@@ -1,7 +1,7 @@
 const isJson = require('../util/isJson');
-const { Op } = require("sequelize");
+const { Op } = require('sequelize');
 
-module.exports = function(req, res, next) {
+module.exports = function (req, res, next) {
   let { filter } = req.query;
   filter = filter && isJson(filter) ? JSON.parse(filter) : false;
 
@@ -16,7 +16,6 @@ module.exports = function(req, res, next) {
 
       if (typeof compareValue === 'object') {
         Object.keys(compareValue).forEach((item, i) => {
-
           if (item === '!=') {
             const itemValue = compareValue[item];
             delete compareValue[item];
@@ -29,9 +28,8 @@ module.exports = function(req, res, next) {
             compareValue[Op.substring] = itemValue;
           }
         });
-
       }
-    })
+    });
 
     req.dbQuery.where = filter;
   }

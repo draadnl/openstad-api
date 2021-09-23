@@ -12,9 +12,8 @@ const OAuthApi = require('../services/oauth-api');
  * @param next
  * @returns {Promise<*>}
  */
-module.exports = async function getUser( req, res, next ) {
+module.exports = async function getUser(req, res, next) {
   try {
-
     if (!req.headers['x-authorization']) {
       return nextWithEmptyUser(req, res, next);
     }
@@ -22,22 +21,23 @@ module.exports = async function getUser( req, res, next ) {
     const userId = getUserId(req.headers['x-authorization']);
 
     const which = req.query.useOauth || 'default';
-    let siteConfig = req.site && merge({}, req.site.config, { id: req.site.id });
+    let siteConfig =
+      req.site && merge({}, req.site.config, { id: req.site.id });
 
-    if(userId === null) {
+    if (userId === null) {
       return nextWithEmptyUser(req, res, next);
     }
 
     const userEntity = await getUserInstance({ siteConfig, which, userId });
-    req.user = userEntity
+    req.user = userEntity;
     // Pass user entity to template view.
     res.locals.user = userEntity;
     next();
-  } catch(error) {
+  } catch (error) {
     console.error(error);
     next(error);
   }
-}
+};
 
 /**
  * Continue with empty user if user is not set
@@ -65,14 +65,15 @@ function UserId(id, fixed) {
 }
 
 function getUserId(authorizationHeader) {
-  const tokens = config && config.authorization && config.authorization['fixed-auth-tokens'];
+  const tokens =
+    config && config.authorization && config.authorization['fixed-auth-tokens'];
 
   if (authorizationHeader.match(/^bearer /i)) {
     const jwt = parseJwt(authorizationHeader);
-    return (jwt && jwt.userId) ? new UserId(jwt.userId, false) : null;
+    return jwt && jwt.userId ? new UserId(jwt.userId, false) : null;
   }
   if (tokens) {
-    const token = tokens.find(token => token.token === authorizationHeader);
+    const token = tokens.find((token) => token.token === authorizationHeader);
     if (token) {
       return new UserId(token.userId, true);
     }
@@ -98,35 +99,39 @@ function parseJwt(authorizationHeader) {
  * @returns {Promise<{}|{externalUserId}|*>}
  */
 async function getUserInstance({ siteConfig, which = 'default', userId }) {
-
   let dbUser;
-  
-  try {
 
+  try {
     dbUser = await db.User.findByPk(userId.id);
 
     if (!dbUser || !dbUser.externalUserId || !dbUser.externalAccessToken) {
       return userId.fixed ? dbUser : {};
     }
-
-  } catch(error) {
+  } catch (error) {
     console.log(error);
     throw error;
   }
 
   try {
-
-    let oauthUser = await OAuthApi.fetchUser({ siteConfig, which, token: dbUser.externalAccessToken });
+    let oauthUser = await OAuthApi.fetchUser({
+      siteConfig,
+      which,
+      token: dbUser.externalAccessToken,
+    });
 
     let mergedUser = merge(dbUser, oauthUser);
-    mergedUser.role = mergedUser.role || ((mergedUser.email || mergedUser.phoneNumber || mergedUser.hashedPhoneNumber) ? 'member' : 'anonymous');
-    
-    return mergedUser;
+    mergedUser.role =
+      mergedUser.role ||
+      (mergedUser.email ||
+      mergedUser.phoneNumber ||
+      mergedUser.hashedPhoneNumber
+        ? 'member'
+        : 'anonymous');
 
-  } catch(error) {
+    return mergedUser;
+  } catch (error) {
     return await resetUserToken(dbUser);
   }
-
 }
 
 /**
@@ -136,9 +141,9 @@ async function getUserInstance({ siteConfig, which = 'default', userId }) {
  * @returns {Promise<{}>}
  */
 async function resetUserToken(user) {
-  if (!( user && user.update )) return {};
+  if (!(user && user.update)) return {};
   await user.update({
-    externalAccessToken: null
+    externalAccessToken: null,
   });
 
   return {};
