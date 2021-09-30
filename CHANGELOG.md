@@ -2,6 +2,7 @@
 
 ## Unreleased
 * Check if extraData of oauth user is null to prevent error while merging api and oauth extraData.
+* Remove userId from votes endpoint when user does not have moderator rights
 
 ## v0.16.0
 * Statuscode for error 'Already voted' was 500 and is now 403
