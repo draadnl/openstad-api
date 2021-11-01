@@ -135,13 +135,19 @@ module.exports = function( db, sequelize, DataTypes ) {
 			}
 		},
 
-		nickName: {
-			type         : DataTypes.STRING(64),
-			allowNull    : true,
-			set          : function( value ) {
-				this.setDataValue('nickName', sanitize.noTags(value));
-			}
-		},
+    nickName: {
+      type: DataTypes.STRING(64),
+      allowNull: true,
+      auth: {
+        listableBy: ['editor', 'owner'],
+        viewableBy: 'all',
+        createableBy: ['editor', 'owner'],
+        updateableBy: ['editor', 'owner'],
+      },
+      set: function (value) {
+        this.setDataValue('nickName', sanitize.noTags(value));
+      }
+    },
 
 		firstName: {
 			type         : DataTypes.STRING(64),
@@ -275,17 +281,16 @@ module.exports = function( db, sequelize, DataTypes ) {
 			}
 		},
 
-		fullName: {
-			type         : DataTypes.VIRTUAL,
-			allowNull    : true,
-			get          : function() {
-				var firstName = this.getDataValue('firstName') || '';
-				var lastName  = this.getDataValue('lastName') || '';
-				return firstName || lastName ?
-				  (firstName+' '+lastName) :
-				  undefined;
-			}
-		},
+    fullName: {
+      type: DataTypes.VIRTUAL,
+      allowNull: true,
+      get: function () {
+        var firstName = this.getDataValue('firstName') || '';
+        var lastName = this.getDataValue('lastName') || '';
+        var space = firstName && lastName ? ' ' : '';
+        return firstName || lastName ? (firstName + space + lastName) : undefined;
+      }
+    },
 
 		initials: {
 			type         : DataTypes.VIRTUAL,
@@ -299,11 +304,21 @@ module.exports = function( db, sequelize, DataTypes ) {
 			}
 		},
 
-		gender: {
-			type         : DataTypes.ENUM('male', 'female'),
-			allowNull    : true,
-			defaultValue : null,
-		},
+    displayName: {
+      type: DataTypes.VIRTUAL,
+      allowNull: true,
+      get: function () {
+        var nickName = this.getDataValue('nickName');
+        var fullName = this.fullName;
+        return nickName || fullName || undefined;
+      }
+    },
+
+    gender: {
+      type: DataTypes.ENUM('male', 'female'),
+      allowNull: true,
+      defaultValue: null,
+    },
 
 		zipCode: {
 			type         : DataTypes.STRING(10),
