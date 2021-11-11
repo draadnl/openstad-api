@@ -42,6 +42,8 @@ router
 		if (req.query.includeUser) {
 			req.scope.push('includeUser');
 		}
+		
+		req.scope.push('includeSite');
 
 		return next();
 
