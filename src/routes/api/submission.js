@@ -120,8 +120,11 @@ router.route('/')
 				return next();
 			}
 			
+			console.log ('===> submittedData', submittedData);
+			
 			// Check for blocklist emails in submitted data
 			submittedData.some(function (data) {
+				console.log ('===> data', data);
 				return blocklist.some(function (email) {
 					if (data.indexOf(email) > -1) {
 						req.body.sendMail = false;
