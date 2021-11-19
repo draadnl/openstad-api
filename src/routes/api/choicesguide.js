@@ -611,6 +611,22 @@ router.route('/:choicesGuideId(\\d+)(/questiongroup/:questionGroupId(\\d+))?/res
       })
       .catch(next);
   })
+// count results
+  .get(function(req, res, next) {
+    if (!req.query.count) {
+      return next();
+    }
+    const where = { choicesGuideId: req.choicesguide.id };
+    db.ChoicesGuideResult
+      .scope(...req.scope)
+      .count({where})
+      .then( (count) => {
+        return {count};
+        })
+      .then(function( found ) {
+        res.json(found);
+      });
+  })
 
 // list results
 // ------------
