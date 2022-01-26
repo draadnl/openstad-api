@@ -11,10 +11,10 @@ require('./config/debug');
 
 // Start HTTP server.
 const Server     = require('./src/Server');
-const Cron       = require('./src/Cron');
+//const Cron       = require('./src/Cron');
 // const ImageOptim = require('./src/ImageOptim');
 
-Cron.start();
+//Cron.start();
 
 Server.init();
 Server.start(config.get('express.port'));
