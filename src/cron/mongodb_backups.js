@@ -12,6 +12,10 @@ module.exports = {
 	cronTime: '0 0 1 * * *',
 	runOnInit: true,
 	onTick: function() {
+    if (!!process.env.PREVENT_BACKUP_CRONJOBS === true) {
+      return;
+    }
+    
     const objectStoreUrl = process.env.OBJECT_STORE_URL;
     const objectStoreUser = process.env.OBJECT_STORE_USER;
     const objectStorePass = process.env.OBJECT_STORE_PASS;

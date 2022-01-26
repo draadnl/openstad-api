@@ -12,6 +12,10 @@ const backupMysqlToS3 = async () => {
   const isOnK8s = !!process.env.KUBERNETES_NAMESPACE;
   const namespace = process.env.KUBERNETES_NAMESPACE;
 
+  if (!!process.env.PREVENT_BACKUP_CRONJOBS === true) {
+    return;
+  }
+  
   if (dbsToBackup) {
     dbsToBackup.forEach(async function(dbName) {
       // return the dump from the function and not to a file
@@ -71,6 +75,6 @@ module.exports = {
 	cronTime: '0 0 1 * * *',
 	runOnInit: false,
 	onTick: async function() {
-    backupMysqlToS3();
+    return backupMysqlToS3();
 	}
 };
