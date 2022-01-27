@@ -8,10 +8,14 @@ const s3 = require('../services/awsS3');
 //
 // Runs every night at 1:00.
 const backupMysqlToS3 = async () => {
+  if (!!process.env.PREVENT_BACKUP_CRONJOBS === true) {
+    return;
+  }
+  
   const dbsToBackup = process.env.S3_DBS_TO_BACKUP ? process.env.S3_DBS_TO_BACKUP.split(',') : false;
   const isOnK8s = !!process.env.KUBERNETES_NAMESPACE;
   const namespace = process.env.KUBERNETES_NAMESPACE;
-
+  
   if (dbsToBackup) {
     dbsToBackup.forEach(async function(dbName) {
       // return the dump from the function and not to a file
@@ -41,8 +45,10 @@ const backupMysqlToS3 = async () => {
           Body: result.dump.data,
           ACL: "private"
       };
+      
+      const client = s3.getClient();
 
-      s3.putObject(params, function(err, data) {
+      client.putObject(params, function(err, data) {
           if (err) console.log(err, err.stack);
           else     console.log(data);
       });
@@ -69,6 +75,6 @@ module.exports = {
 	cronTime: '0 0 1 * * *',
 	runOnInit: false,
 	onTick: async function() {
-    backupMysqlToS3();
+    return backupMysqlToS3();
 	}
 };
