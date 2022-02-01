@@ -128,13 +128,13 @@
                                                 {% if innerValue != 'anders' %}
                                                     {% if innerKey == 'Anders, namelijk' %}
                                                         {% if innerValue %}
-                                                            <li>Anders, namelijk: {{ innerValue | safe }}</li>
+                                                            <li>Anders, namelijk: {{ innerValue }}</li>
                                                         {% endif %}
                                                     {% else %}
                                                         {% if innerValue and innerValue.indexOf('http') != -1 %}
-                                                            <li>Bestand {{ innerKey | plusone }}: <a href="{{ innerValue | safe }}" target="_blank">Download hier</a></li>
+                                                            <li>Bestand {{ innerKey | plusone }}: <a href="{{ innerValue }}" target="_blank">Download hier</a></li>
                                                         {% else %}
-                                                            <li>{{ innerValue | safe }}</li>
+                                                            <li>{{ innerValue }}</li>
                                                         {% endif %}
                                                     {% endif %}
                                                 {% endif %}
@@ -145,9 +145,9 @@
                                         {% else %}
                                             <strong>{{ fieldKey }}</strong><br />
                                             {% if value and value.indexOf('http') != -1 %}
-                                                <a href="{{ value | safe }}" target="_blank">Bekijk hier</a>
+                                                <a href="{{ value }}" target="_blank">Bekijk hier</a>
                                             {% else %}
-                                                {{ value | safe }}
+                                                {{ value }}
                                             {% endif %}
                                             <br />
                                             <br />
