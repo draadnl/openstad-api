@@ -23,6 +23,9 @@ module.exports = {
     data.URL = ( myConfig.cms && myConfig.cms.url ) || myConfig.url || ( 'https://' + maildata.HOSTNAME );
     data.SITENAME = ( site && site.title ) || myConfig.siteName;
 
+    emailData.SITENAME = data.SITENAME;
+    emailData.logo = site.config.styling.logo;
+
     emailData.text = nunjucks.renderString(emailData.text, emailData);
     data.html = nunjucks.render(emailData.template, emailData);
 
