@@ -17,7 +17,7 @@ const backupMysqlToS3 = async () => {
   const namespace = process.env.KUBERNETES_NAMESPACE;
   
   if (dbsToBackup) {
-    dbsToBackup.forEach(async function(dbName) {
+    for (let dbName of dbsToBackup) {
       // return the dump from the function and not to a file
 
       const result = await mysqldump({
@@ -53,7 +53,7 @@ const backupMysqlToS3 = async () => {
           else     console.log(data);
       });
 
-    });
+    }
 
   }
 }
@@ -73,7 +73,7 @@ const backupMysqlToS3 = async () => {
  */
 module.exports = {
 	cronTime: '0 0 1 * * *',
-	runOnInit: false,
+	runOnInit: true,
 	onTick: async function() {
     return backupMysqlToS3();
 	}
