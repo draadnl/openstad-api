@@ -11,10 +11,14 @@ const backupMysqlToS3 = async () => {
   const dbsToBackup = process.env.S3_DBS_TO_BACKUP ? process.env.S3_DBS_TO_BACKUP.split(',') : false;
   const isOnK8s = !!process.env.KUBERNETES_NAMESPACE;
   const namespace = process.env.KUBERNETES_NAMESPACE;
+  
+  console.log ('backing up mysql to s3', dbsToBackup);
 
   if (dbsToBackup) {
-    dbsToBackup.forEach(async function(dbName) {
+    for (let dbName of dbsToBackup) {
       // return the dump from the function and not to a file
+      
+      console.log ('mysql backing up', dbName);
 
       const result = await mysqldump({
           connection: {
@@ -30,7 +34,7 @@ const backupMysqlToS3 = async () => {
             excludeTables: true
           }
       });
-
+      
       const created = moment().format('YYYY-MM-DD hh:mm:ss')
 
       const key = isOnK8s ? `mysql/${namespace}/${dbName}_${created}sql` : `mysql/${dbName}_${created}sql`;
@@ -49,7 +53,7 @@ const backupMysqlToS3 = async () => {
           else     console.log(data);
       });
 
-    });
+    }
 
   }
 }
@@ -69,7 +73,7 @@ const backupMysqlToS3 = async () => {
  */
 module.exports = {
 	cronTime: '0 0 1 * * *',
-	runOnInit: false,
+	runOnInit: true,
 	onTick: async function() {
     backupMysqlToS3();
 	}
