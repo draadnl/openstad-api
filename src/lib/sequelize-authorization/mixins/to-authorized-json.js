@@ -15,6 +15,13 @@ module.exports = function toAuthorizedJSON(user) {
   if (self.toString().match('SequelizeInstance:user')) { // TODO: find a better check
     userId = self.id
   }
+  
+  if (
+    self.toString().match('SequelizeInstance:organisation') &&
+    user.organisationId === self.id
+  ) {
+    userId = user.id;
+  }
 
   let keys = self._options.attributes || Object.keys( self.dataValues );
   keys = keys.concat( Object.keys(self).filter( key => key != 'dataValues' && !key.match(/^_/) ) );

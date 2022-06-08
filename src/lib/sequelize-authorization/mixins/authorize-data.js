@@ -15,9 +15,9 @@ module.exports = function authorizeData(data, action, user, self, site) {
     if (self.toString().match('SequelizeInstance:user')) { // TODO: find a better check
       userId = self.id
     }
-
-    // TODO: dit is een check op jezelf, nu kan de argument:view check uit de routes
-    if (!self.can(action, user))  throw 'cannot';
+      if (!self.can(action, user))
+        // TODO: dit is een check op jezelf, nu kan de argument:view check uit de routes
+        throw 'cannot';
 
     let keys = Object.keys( data );
 
@@ -50,6 +50,10 @@ module.exports = function authorizeData(data, action, user, self, site) {
       if (self.toString().match('SequelizeInstance:user') && self.externalUserId && self.externalUserId === user.externalUserId) {
         // special case: users are owner on their users on other sites
         ownerId = user.id;
+      }
+
+      if (self.toString().match('SequelizeInstance:organisation') && user.organisationId === self.id) {
+        ownerId = user.id
       }
 
       if (!hasRole(user, testRole, ownerId)) {
