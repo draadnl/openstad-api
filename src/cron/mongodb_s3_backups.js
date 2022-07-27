@@ -1,10 +1,11 @@
 const fs = require('fs'); // Needed for example below
 const moment = require('moment')
 const { exec } = require('child_process');
-const s3 = require('../services/awsS3');
 
 const backupMongoDBToS3 = async () => {
     if (process.env.S3_MONGO_BACKUPS === 'ON') {
+      const s3 = require('../services/awsS3');
+
       const host = process.env.MONGO_DB_HOST || 'localhost';
       const port = process.env.MONGO_DB_PORT || 27017;
       const tmpDbFile = 'db_mongo';

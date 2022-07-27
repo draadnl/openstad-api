@@ -1,6 +1,5 @@
 const mysqldump = require('mysqldump');
 const moment = require('moment')
-const s3 = require('../services/awsS3');
 
 // Purpose
 // -------
@@ -8,11 +7,13 @@ const s3 = require('../services/awsS3');
 //
 // Runs every night at 1:00.
 const backupMysqlToS3 = async () => {
+  
   const dbsToBackup = process.env.S3_DBS_TO_BACKUP ? process.env.S3_DBS_TO_BACKUP.split(',') : false;
   const isOnK8s = !!process.env.KUBERNETES_NAMESPACE;
   const namespace = process.env.KUBERNETES_NAMESPACE;
-
+  
   if (dbsToBackup) {
+    const s3 = require('../services/awsS3');
     dbsToBackup.forEach(async function(dbName) {
       // return the dump from the function and not to a file
 
