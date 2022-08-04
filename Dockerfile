@@ -1,4 +1,3 @@
-# Nodejs 8.0.0 alpine 3.6.0
 FROM node:16.16.0-alpine
 
 # Label for tracking
