@@ -87,7 +87,7 @@ module.exports = function( db, sequelize, DataTypes ) {
     },
 
     type: {
-      type: DataTypes.ENUM('continuous', 'enum-buttons', 'enum-radio', 'a-to-b', 'input', 'textarea', 'multiple-choice'),
+      type: DataTypes.ENUM('continuous', 'enum-buttons', 'enum-radio', 'a-to-b'),
       defaultValue: 'continuous',
       allowNull: false
     },
@@ -137,18 +137,6 @@ module.exports = function( db, sequelize, DataTypes ) {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    
-    validation: {
-      type: DataTypes.JSON,
-      allowNull: false,
-      defaultValue: {},
-    },
-    
-    extraConfig: {
-      type: DataTypes.JSON,
-      allowNull: false,
-      defaultValue: {},
-    }
 
   }, {
 

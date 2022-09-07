@@ -14,30 +14,34 @@
     "test:unit": "jest --no-cache --config jest.config.js",
     "test:unit:watch": "jest --watch --no-cache",
     "test:e2e": "jest --no-cache --config jest-e2e.config.js --forceExit",
-    "test:e2e:debug": "jest --no-cache --config jest-e2e.config.js --verbose --forceExit"
+    "test:e2e:debug": "jest --no-cache --config jest-e2e.config.js --verbose --forceExit",
+    "prepare": "husky install"
   },
   "dependencies": {
     "@kubernetes/client-node": "^0.12.3",
+    "apicache-plus": "^2.2.2",
     "aws-sdk": "^2.1005.0",
     "bcrypt": "^5.0.1",
     "co": "^4.6.0",
     "compression": "^1.7.4",
     "config": "^3.3.6",
     "connect-session-sequelize": "^7.1.2",
-    "cookie-parser": "^1.4.6",
+    "cookie-parser": "^1.4.5",
     "cron": "^1.8.2",
     "dotenv": "^8.6.0",
-    "express": "^4.17.3",
+    "express": "^4.17.1",
     "express-brute": "^1.0.1",
     "express-promise-router": "^3.0.3",
     "express-session": "^1.17.2",
-    "fuzzysort": "^1.2.1",
+    "fuzzysort": "^1.1.4",
     "html-to-text": "^5.1.1",
-    "http-errors": "^1.8.1",
+    "http-errors": "^1.8.0",
     "ip": "^1.1.5",
-    "isomorphic-fetch": "^3.0.0",
-    "json-logic-js": "^2.0.2",
+    "joi": "^17.4.0",
+    "json2csv": "^5.0.6",
     "jsonwebtoken": "^8.5.1",
+    "lodash": "^4.17.21",
+    "lodash.difference": "^4.5.0",
     "mariadb": "^2.5.4",
     "marked": "^4.0.10",
     "merge": "^2.1.1",
@@ -65,6 +69,9 @@
     "eslint-plugin-import": "^2.24.2",
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-sonarjs": "^0.10.0",
+    "faker": "^5.5.3",
+    "husky": "^6.0.0",
+    "lint-staged": "^11.0.0",
     "jest": "^25.5.4",
     "npm-commands": "^1.1.0",
     "prettier": "^2.4.1",
@@ -72,5 +79,8 @@
     "supertest": "^4.0.2"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "lint-staged": {
+    "*.{js,css,md}": "prettier --write"
+  }
 }

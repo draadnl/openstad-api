@@ -2,23 +2,42 @@ const Sequelize = require('sequelize');
 const express = require('express');
 const createError = require('http-errors');
 const config = require('config');
-const db = require('../../db');
-const auth = require('../../middleware/sequelize-authorization-middleware');
-const pagination = require('../../middleware/pagination');
-const {Op} = require('sequelize');
-const searchResults = require('../../middleware/search-results-user');
+const { Op } = require('sequelize');
 const fetch = require('node-fetch');
 const merge = require('merge');
+const rp = require('request-promise');
+const debug = require('debug')(`app:${__filename}`);
+
+const db = require('../../db');
+
+const auth = require('../../middleware/sequelize-authorization-middleware');
+const pagination = require('../../middleware/pagination');
+const searchResults = require('../../middleware/search-results-user');
 const OAuthApi = require('../../services/oauth-api');
 const OAuthUser = require('../../services/oauth-user');
 
 const filterBody = (req, res, next) => {
   const data = {};
-  const keys = ['firstName', 'lastName', 'nickName', 'email', 'phoneNumber', 'streetName', 'houseNumber', 'city', 'suffix', 'postcode', 'extraData', 'listableByRole', 'detailsViewableByRole'];
+  const keys = [
+    'firstName',
+    'lastName',
+    'nickName',
+    'email',
+    'phoneNumber',
+    'streetName',
+    'houseNumber',
+    'city',
+    'suffix',
+    'postcode',
+    'extraData',
+    'listableByRole',
+    'detailsViewableByRole',
+    'isEventProvider',
+  ];
 
   keys.forEach((key) => {
     if (typeof req.body[key] != 'undefined') {
-      let value =  req.body[key];
+      let value = req.body[key];
       value = typeof value === 'string' ? value.trim() : value;
       data[key] = value;
     }
@@ -27,28 +46,32 @@ const filterBody = (req, res, next) => {
   req.body = data;
 
   next();
-}
+};
 
-const router = express.Router({mergeParams: true});
+const router = express.Router({ mergeParams: true });
+
+router.all('*', function (req, res, next) {
+  req.scope = ['includeSite'];
+
+  if (req.query.includeOrganisation) {
+    req.scope.push('includeOrganisation');
+  }
+
+  next();
+});
 
 router
-  .all('*', function (req, res, next) {
-    req.scope = ['includeSite'];
-    next();
-  });
-
-
-router.route('/')
-// list users
-// ----------
-// .get(auth.can('User', 'list')) -> now handled by onlyListable
+  .route('/')
+  // list users
+  // ----------
+  // .get(auth.can('User', 'list')) -> now handled by onlyListable
   .get(function (req, res, next) {
-    req.scope.push({method: ['onlyListable', req.user.id, req.user.role]});
+    req.scope.push({ method: ['onlyListable', req.user.id, req.user.role] });
     next();
   })
   .get(pagination.init)
   .get(function (req, res, next) {
-    let {dbQuery} = req;
+    let { dbQuery } = req;
 
     if (!dbQuery.where) {
       dbQuery.where = {};
@@ -73,10 +96,19 @@ router.route('/')
      * Add siteId to query conditions
      * @type {{siteId: *}}
      */
-    const queryConditions = Object.assign(dbQuery.where, {siteId: req.params.siteId});
+    const queryConditions = Object.assign(dbQuery.where, {
+      siteId: req.params.siteId,
+    });
 
-    db.User
-      .scope(...req.scope)
+    /**
+     * For now a way to filter on event providers since they don't have a seperate role
+     * but just a column in the database
+     */
+    if (req.user && req.user.role === 'admin' && req.query.showEventProviders) {
+      queryConditions.isEventProvider = true;
+    }
+
+    db.User.scope(...req.scope)
       .findAndCountAll({
         ...dbQuery,
         where: queryConditions,
@@ -95,37 +127,45 @@ router.route('/')
     res.json(req.results);
   })
 
-// create user
-// -----------
+  // create user
+  // -----------
   .post(auth.can('User', 'create'))
   .post(function (req, res, next) {
     if (!req.site) return next(createError(401, 'Site niet gevonden'));
     return next();
   })
   .post(function (req, res, next) {
-    if (!(req.site.config && req.site.config.users && req.site.config.users.canCreateNewUsers)) return next(createError(401, 'Gebruikers mogen niet aangemaakt worden'));
+    if (
+      !(
+        req.site.config &&
+        req.site.config.users &&
+        req.site.config.users.canCreateNewUsers
+      )
+    )
+      return next(createError(401, 'Gebruikers mogen niet aangemaakt worden'));
     return next();
   })
   .post(filterBody)
   .post(function (req, res, next) {
     // Look for an Openstad user with this e-mail
     // TODO: other types of users
-    if (!req.body.email) return next(createError(401, 'E-mail is a required field'));
+    if (!req.body.email)
+      return next(createError(401, 'E-mail is a required field'));
     let which = req.query.useOauth || 'default';
-    let siteConfig = req.site && merge({}, req.site.config, { id: req.site.id });
+    let siteConfig =
+      req.site && merge({}, req.site.config, { id: req.site.id });
     let email = req.body && req.body.email;
-    OAuthApi
-      .fetchUser({ siteConfig, which, email })
-      .then(json => {
+    OAuthApi.fetchUser({ siteConfig, which, email })
+      .then((json) => {
         req.oAuthUser = json;
         next();
       })
       .catch(next);
   })
-/**
- * In case a user exists for that e-mail in the oAuth api move on, otherwise create it
- * then create it
- */
+  /**
+   * In case a user exists for that e-mail in the oAuth api move on, otherwise create it
+   * then create it
+   */
   .post(function (req, res, next) {
     if (req.oAuthUser) {
       next();
@@ -134,23 +174,21 @@ router.route('/')
       let which = req.query.useOauth || 'default';
       let siteConfig = req.site && req.site.config;
       let userData = Object.assign(req.body);
-      OAuthApi
-        .createUser({ siteConfig, which, userData })
-        .then(json => {
+      OAuthApi.createUser({ siteConfig, which, userData })
+        .then((json) => {
           req.oAuthUser = json;
-          next()
+          next();
         })
         .catch(next);
     }
   })
-// check if user not already exists in API
+  // check if user not already exists in API
   .post(function (req, res, next) {
-    db.User
-      .scope(...req.scope)
+    db.User.scope(...req.scope)
       .findOne({
-        where: {email: req.body.email, siteId: req.params.siteId},
+        where: { email: req.body.email, siteId: req.params.siteId },
       })
-      .then(found => {
+      .then((found) => {
         if (found) {
           console.log('user already exists', found);
 
@@ -166,17 +204,19 @@ router.route('/')
       ...req.body,
       siteId: req.site.id,
       role: req.oAuthUser.role || 'member',
-      externalUserId: req.oAuthUser.id
+      externalUserId: req.oAuthUser.id,
     };
-    db.User
-      .authorizeData(data, 'create', req.user)
+    db.User.authorizeData(data, 'create', req.user)
       .create(data)
-      .then(result => {
+      .then((result) => {
         return res.json(result);
       })
       .catch(function (error) {
         // todo: dit komt uit de oude routes; maak het generieker
-        if (typeof error == 'object' && error instanceof Sequelize.ValidationError) {
+        if (
+          typeof error == 'object' &&
+          error instanceof Sequelize.ValidationError
+        ) {
           let errors = [];
 
           error.errors.forEach(function (error) {
@@ -192,21 +232,21 @@ router.route('/')
 
 // anonymize user
 // --------------
-router.route('/:userId(\\d+)/:willOrDo(will|do)-anonymize(:all(all)?)')
+router
+  .route('/:userId(\\d+)/:willOrDo(will|do)-anonymize(:all(all)?)')
   .put(function (req, res, next) {
     // this user
     req.userId = parseInt(req.params.userId);
-    if (!req.userId) return next(new createError('404', 'User not found'))
-    return db.User
-      .scope(...req.scope)
+    if (!req.userId) return next(new createError('404', 'User not found'));
+    return db.User.scope(...req.scope)
       .findOne({
-        where: {id: req.userId, siteId: req.params.siteId},
+        where: { id: req.userId, siteId: req.params.siteId },
         //where: { id: userId }
       })
-      .then(found => {
+      .then((found) => {
         if (!found) throw new Error('User not found');
         req.targetUser = found;
-        req.externalUserId= found.externalUserId;
+        req.externalUserId = found.externalUserId;
         next();
         return null;
       })
@@ -215,13 +255,15 @@ router.route('/:userId(\\d+)/:willOrDo(will|do)-anonymize(:all(all)?)')
   .put(function (req, res, next) {
     if (!req.externalUserId) return next();
     // this user on other sites
-    let where = { externalUserId: req.externalUserId, [Op.not]: { id: req.userId } };
-    db.User
-      .scope(...req.scope)
+    let where = {
+      externalUserId: req.externalUserId,
+      [Op.not]: { id: req.userId },
+    };
+    db.User.scope(...req.scope)
       .findAll({
         where,
       })
-      .then(found => {
+      .then((found) => {
         if (!found) return next();
         req.linkedUsers = found;
         next();
@@ -235,7 +277,7 @@ router.route('/:userId(\\d+)/:willOrDo(will|do)-anonymize(:all(all)?)')
       let ids = req.body && req.body.onlyUserIds;
       if (!ids) return next();
       if (!Array.isArray(ids)) ids = [ids];
-      ids = ids.map(id => parseInt(id)).filter(id => typeof id == 'number');
+      ids = ids.map((id) => parseInt(id)).filter((id) => typeof id == 'number');
       if (ids.length) req.onlyUserIds = ids;
     } catch (err) {
       return next(err);
@@ -248,13 +290,20 @@ router.route('/:userId(\\d+)/:willOrDo(will|do)-anonymize(:all(all)?)')
       let ids = req.body && req.body.onlySiteIds;
       if (!ids) return next();
       if (!Array.isArray(ids)) ids = [ids];
-      ids = ids.map(id => parseInt(id)).filter(id => typeof id == 'number');
+      ids = ids.map((id) => parseInt(id)).filter((id) => typeof id == 'number');
       if (ids.length) {
-        let users = [ req.targetUser, ...req.linkedUsers ];
-        let xx = ids.map( siteId => users.find(user => siteId == user.siteId) );
-        let userIds = ids.map( siteId => users.find(user => siteId == user.siteId) ).filter(user => !!user).map( user => user.id );
+        let users = [req.targetUser, ...req.linkedUsers];
+        let xx = ids.map((siteId) =>
+          users.find((user) => siteId == user.siteId)
+        );
+        let userIds = ids
+          .map((siteId) => users.find((user) => siteId == user.siteId))
+          .filter((user) => !!user)
+          .map((user) => user.id);
         req.onlyUserIds = (req.onlyUserIds || []).concat(userIds);
-        req.onlyUserIds = req.onlyUserIds.filter((value, index, self) => self.indexOf(value) === index ); // filter duplication
+        req.onlyUserIds = req.onlyUserIds.filter(
+          (value, index, self) => self.indexOf(value) === index
+        ); // filter duplication
       }
     } catch (err) {
       return next(err);
@@ -263,16 +312,23 @@ router.route('/:userId(\\d+)/:willOrDo(will|do)-anonymize(:all(all)?)')
   })
   .put(async function (req, res, next) {
     let result;
-    if (!(req.targetUser && req.targetUser.can && req.targetUser.can('update', req.user))) return next(new Error('You cannot update this User'));
+    if (
+      !(
+        req.targetUser &&
+        req.targetUser.can &&
+        req.targetUser.can('update', req.user)
+      )
+    )
+      return next(new Error('You cannot update this User'));
     if (req.onlyUserIds && !req.onlyUserIds.includes(req.targetUser.id)) {
       req.results = {
-        "ideas": [],
-        "articles": [],
-        "arguments": [],
-        "votes": [],
-        "users": [],
-        "sites": [],
-      }
+        ideas: [],
+        articles: [],
+        arguments: [],
+        votes: [],
+        users: [],
+        sites: [],
+      };
       return next();
     }
     try {
@@ -281,9 +337,9 @@ router.route('/:userId(\\d+)/:willOrDo(will|do)-anonymize(:all(all)?)')
       } else {
         result = await req.targetUser.willAnonymize();
       }
-      result.users = [ result.user ];
+      result.users = [result.user];
       delete result.user;
-      result.sites = [ result.site ];
+      result.sites = [result.site];
       delete result.site;
       req.results = result;
     } catch (err) {
@@ -292,13 +348,14 @@ router.route('/:userId(\\d+)/:willOrDo(will|do)-anonymize(:all(all)?)')
     return next();
   })
   .put(async function (req, res, next) {
-    if ( !(req.params.all) ) return next();
-    if ( !(req.linkedUsers) ) return next();
+    if (!req.params.all) return next();
+    if (!req.linkedUsers) return next();
     try {
       for (const user of req.linkedUsers) {
         if (!req.onlyUserIds || req.onlyUserIds.includes(user.id)) {
           let result;
-          if (!(user && user.can && user.can('update', req.user))) return next(new Error('You cannot update this User'));
+          if (!(user && user.can && user.can('update', req.user)))
+            return next(new Error('You cannot update this User'));
           if (req.params.willOrDo == 'do') {
             result = await user.doAnonymize();
           } else {
@@ -307,8 +364,12 @@ router.route('/:userId(\\d+)/:willOrDo(will|do)-anonymize(:all(all)?)')
           req.results.users.push(result.user);
           req.results.sites.push(result.site);
           req.results.ideas = req.results.ideas.concat(result.ideas || []);
-          req.results.articles = req.results.articles.concat(result.articles || []);
-          req.results.arguments = req.results.arguments.concat(result.arguments || []);
+          req.results.articles = req.results.articles.concat(
+            result.articles || []
+          );
+          req.results.arguments = req.results.arguments.concat(
+            result.arguments || []
+          );
           req.results.votes = req.results.votes.concat(result.votes || []);
         }
       }
@@ -321,12 +382,11 @@ router.route('/:userId(\\d+)/:willOrDo(will|do)-anonymize(:all(all)?)')
     if (!req.externalUserId) return next();
     // refresh: this user including other sites
     let where = { externalUserId: req.externalUserId };
-    db.User
-      .scope(...req.scope)
+    db.User.scope(...req.scope)
       .findAll({
         where,
       })
-      .then(found => {
+      .then((found) => {
         if (!found) return next();
         req.remainingUsers = found;
         next();
@@ -336,13 +396,18 @@ router.route('/:userId(\\d+)/:willOrDo(will|do)-anonymize(:all(all)?)')
   })
   .put(async function (req, res, next) {
     if (req.params.willOrDo != 'do') return next();
-    if ( !req.remainingUsers || req.remainingUsers.length > 0 ) return next();
+    if (!req.remainingUsers || req.remainingUsers.length > 0) return next();
 
     // no api users left for this oauth user, so remove the oauth user
     let which = req.query.useOauth || 'default';
-    let siteConfig = req.site && merge({}, req.site.config, { id: req.site.id });
+    let siteConfig =
+      req.site && merge({}, req.site.config, { id: req.site.id });
     try {
-      let result = await OAuthApi.deleteUser({ siteConfig, which, userData: { id: req.externalUserId }})
+      let result = await OAuthApi.deleteUser({
+        siteConfig,
+        which,
+        userData: { id: req.externalUserId },
+      });
     } catch (err) {
       return next(err);
     }
@@ -350,30 +415,31 @@ router.route('/:userId(\\d+)/:willOrDo(will|do)-anonymize(:all(all)?)')
   })
   .put(function (req, res, next) {
     // customized version of auth.useReqUser
-    Object.keys(req.results).forEach(which => {
-      req.results[which] && req.results[which].forEach( result => {
-        result.auth = result.auth || {};
-        result.auth.user = req.user;
-      });
+    Object.keys(req.results).forEach((which) => {
+      req.results[which] &&
+        req.results[which].forEach((result) => {
+          result.auth = result.auth || {};
+          result.auth.user = req.user;
+        });
     });
     return next();
   })
   .put(function (req, res, next) {
     res.json(req.results);
-  })
+  });
 
 // one user
 // --------
-router.route('/:userId(\\d+)')
+router
+  .route('/:userId(\\d+)')
   .all(function (req, res, next) {
     const userId = parseInt(req.params.userId) || 1;
-    db.User
-      .scope(...req.scope)
+    db.User.scope(...req.scope)
       .findOne({
-        where: {id: userId, siteId: req.params.siteId},
+        where: { id: userId, siteId: req.params.siteId },
         //where: { id: userId }
       })
-      .then(found => {
+      .then((found) => {
         if (!found) throw new Error('User not found');
         req.results = found;
         next();
@@ -381,26 +447,26 @@ router.route('/:userId(\\d+)')
       .catch(next);
   })
 
-// view user
-// ---------
+  // view user
+  // ---------
   .get(auth.can('User', 'view'))
   .get(auth.useReqUser)
   .get(function (req, res, next) {
     res.json(req.results);
   })
 
-// update user
-// -----------
-// TODO: hier zit de suggestie in dat je al je users op anders sites ook mag updaten. Maar dan toch niet, want dat geeft errors.
-// Dus neem een besluit, maar dat expliciet, en zorg dan dat het gaat werken.
-// -----------
+  // update user
+  // -----------
+  // TODO: hier zit de suggestie in dat je al je users op anders sites ook mag updaten. Maar dan toch niet, want dat geeft errors.
+  // Dus neem een besluit, maar dat expliciet, en zorg dan dat het gaat werken.
+  // -----------
   .put(auth.useReqUser)
   .put(filterBody)
   .put(function (req, res, next) {
-
     const user = req.results;
 
-    if (!(user && user.can && user.can('update'))) return next(new Error('You cannot update this User'));
+    if (!(user && user.can && user.can('update')))
+      return next(new Error('You cannot update this User'));
 
     let userId = parseInt(req.params.userId, 10);
     let externalUserId = req.results.externalUserId;
@@ -411,14 +477,17 @@ router.route('/:userId(\\d+)')
      * Update the oauth API first
      */
     let which = req.query.useOauth || 'default';
-    let siteConfig = req.site && merge({}, req.site.config, { id: req.site.id });
-    OAuthApi
-      .updateUser({ siteConfig, which, userData: merge(true, userData, { id: externalUserId }) })
-      .then(json => {
+    let siteConfig =
+      req.site && merge({}, req.site.config, { id: req.site.id });
+    OAuthApi.updateUser({
+      siteConfig,
+      which,
+      userData: merge(true, userData, { id: externalUserId }),
+    })
+      .then((json) => {
         let mergedUserData = json;
 
-        return db.User
-          .scope(['includeSite'])
+        return db.User.scope(['includeSite'])
           .findAll({
             where: {
               externalUserId: mergedUserData.id,
@@ -426,116 +495,138 @@ router.route('/:userId(\\d+)')
               // skip them
               // probably should clean up these users
               siteId: {
-                [Op.not]: 0
-              }
-            }
+                [Op.not]: 0,
+              },
+            },
           })
           .then(function (users) {
             const actions = [];
 
             // dit gaat mis omdat hij het per site doet maar het resultaat al is geparsed voor deze site
-            
+
             if (users) {
               users.forEach((user) => {
                 // only update users with active site (they can be deleteds)
                 if (user.site) {
-                  actions.push(function () {
-                    return new Promise((resolve, reject) => {
+                  actions.push(
+                    (function () {
+                      return new Promise((resolve, reject) => {
+                        let userSiteConfig = merge(true, user.site.config, {
+                          id: user.site.id,
+                        });
 
-                      let userSiteConfig = merge(true, user.site.config, {id: user.site.id});
+                        let clonedUserData = merge(true, mergedUserData);
+                        let siteUserData = OAuthUser.parseDataForSite(
+                          userSiteConfig,
+                          clonedUserData
+                        );
 
-                      let clonedUserData = merge(true, mergedUserData);
-                      let siteUserData = OAuthUser.parseDataForSite(userSiteConfig, clonedUserData);
-
-                      user
-                        .authorizeData(siteUserData, 'update', req.user)
-                        .update(siteUserData)
-                        .then((result) => {
-                          resolve();
-                        })
-                        .catch((err) => {
-                          console.log('err', err)
-                          reject(err);
-                        })
-                    })
-                  }())
+                        user
+                          .authorizeData(siteUserData, 'update', req.user)
+                          .update(siteUserData)
+                          .then((result) => {
+                            resolve();
+                          })
+                          .catch((err) => {
+                            console.log('err', err);
+                            reject(err);
+                          });
+                      });
+                    })()
+                  );
                 }
-
               });
             }
 
-            return Promise.all(actions)
-            // response has been sent; next has no meaning here
-            // .then(() => { next(); })
-              .catch(err => {
-                console.log(err);
-                throw(err)
-              });
-
+            return (
+              Promise.all(actions)
+                // response has been sent; next has no meaning here
+                // .then(() => { next(); })
+                .catch((err) => {
+                  console.log(err);
+                  throw err;
+                })
+            );
           })
-          .catch(err => {
+          .catch((err) => {
             console.log(err);
-            throw(err)
+            throw err;
           });
       })
       .then((result) => {
-        return db.User
-          .scope(['includeSite']) // TODO: waarom includeSite? Kan dat weg?
+        return db.User.scope(['includeSite']) // TODO: waarom includeSite? Kan dat weg?
           .findOne({
-            where: {id: userId, siteId: req.params.siteId}
-          })
+            where: { id: userId, siteId: req.params.siteId },
+          });
       })
-      .then(found => {
+      .then((found) => {
         if (!found) throw new Error('User not found');
         let result = found.toJSON();
         delete result.site;
         res.json(result);
       })
-      .catch(err => {
+      .catch((err) => {
+        console.log(
+          'Could not update user in auth api',
+          err.message,
+          JSON.stringify(
+            {
+              userData: merge(true, userData, { id: externalUserId }),
+            },
+            null,
+            2
+          )
+        );
         console.log(err);
         return next(err);
       });
   })
 
-// delete user
-// -----------
+  // delete user
+  // -----------
   .delete(auth.useReqUser)
   .delete(async function (req, res, next) {
-
     const user = req.results;
 
-    if (!(user && user.can && user.can('delete'))) return next(new Error('You cannot delete this User'));
+    if (!(user && user.can && user.can('delete')))
+      return next(new Error('You cannot delete this User'));
 
     /**
      * An oauth user can have multiple users in the api, every site has it's own user and right
      * In case for this oauth user there is only one site user in the API we also delete the oAuth user
      * Otherwise we keep the oAuth user since it's still needed for the other website
      */
-    const userForAllSites = await db.User.findAll({where: {externalUserId: user.externalUserId}});
-    
+    const userForAllSites = await db.User.findAll({
+      where: { externalUserId: user.externalUserId },
+    });
+
     if (userForAllSites.length <= 1) {
       let which = req.query.useOauth || 'default';
-      let siteConfig = req.site && merge({}, req.site.config, { id: req.site.id });
-      let result = await OAuthApi.deleteUser({ siteConfig, which, userData: { id: user.externalUserId }})
+      let siteConfig =
+        req.site && merge({}, req.site.config, { id: req.site.id });
+      let result = await OAuthApi.deleteUser({
+        siteConfig,
+        which,
+        userData: { id: user.externalUserId },
+      });
     }
-    
+
     /**
      * Delete all connected arguments, votes and ideas created by the user
      */
-    await db.Idea.destroy({where: {userId: req.results.id}});
-    await db.Argument.destroy({where: {userId: req.results.id}});
-    await db.Vote.destroy({where: {userId: req.results.id}});
-    
+    await db.Idea.destroy({ where: { userId: req.results.id } });
+    await db.Argument.destroy({ where: { userId: req.results.id } });
+    await db.Vote.destroy({ where: { userId: req.results.id } });
+
     /**
      * Make anonymous? Delete posts
      */
     return req.results
-      .destroy({force: true})
+      .destroy({ force: true })
       .then(() => {
-        res.json({"user": "deleted"});
+        res.json({ user: 'deleted' });
       })
       .catch(next);
-
-  })
+  });
 
 module.exports = router;

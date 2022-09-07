@@ -14,7 +14,6 @@ const argVoteThreshold = config.ideas && config.ideas.argumentVoteThreshold;
 const userHasRole = require('../lib/sequelize-authorization/lib/hasRole');
 const roles = require('../lib/sequelize-authorization/lib/roles');
 const getExtraDataConfig = require('../lib/sequelize-authorization/lib/getExtraDataConfig');
-const htmlToText = require('html-to-text');
 
 function hideEmailsForNormalUsers(args) {
   return args.map((argument) => {
@@ -71,33 +70,6 @@ module.exports = function (db, sequelize, DataTypes) {
           return (error.message || 'dateFilter error').toString()
         }
       }
-    },
-
-    endDate: {
-      type: DataTypes.VIRTUAL(DataTypes.DATE, ['startDate']),
-      get: function () {
-        var _config = merge.recursive(true, config, this.site.config);
-        var duration =
-          (_config &&
-            _config.ideas &&
-            _config.ideas.duration) ||
-          90;
-        if (
-          this.site &&
-          this.site.config &&
-          this.site.config.ideas &&
-          this.site.config.ideas.automaticallyUpdateStatus &&
-          this.site.config.ideas.automaticallyUpdateStatus.isActive
-        ) {
-          duration =
-            this.site.config.ideas.automaticallyUpdateStatus.afterXDays || 0;
-        }
-        var endDate = moment(this.getDataValue('startDate'))
-          .add(duration, 'days')
-          .toDate();
-
-        return endDate
-      },
     },
 
     sort: {
@@ -204,11 +176,9 @@ module.exports = function (db, sequelize, DataTypes) {
         //   msg  : `Samenvatting moet tussen ${summaryMinLength} en ${summaryMaxLength} tekens zijn`
         // }
         textLength(value) {
-          // We need to undo the sanitization before we can check the length
-          let len = htmlToText.fromString(value).length
+          let len = sanitize.summary(value.trim()).length;
           let summaryMinLength = (this.config && this.config.ideas && this.config.ideas.summaryMinLength || 20)
           let summaryMaxLength = (this.config && this.config.ideas && this.config.ideas.summaryMaxLength || 140)
-
           if (len < summaryMinLength || len > summaryMaxLength)
             throw new Error(`Samenvatting moet tussen ${summaryMinLength} en ${summaryMaxLength} tekens zijn`);
         }
@@ -358,6 +328,14 @@ module.exports = function (db, sequelize, DataTypes) {
           return (error.message || 'dateFilter error').toString()
         }
       }
+    },
+
+    archivedAt: {
+      auth:  {
+        updateableBy: 'editor',
+      },
+      type: DataTypes.DATE,
+      allowNull: true
     },
 
   }, {
@@ -801,6 +779,68 @@ module.exports = function (db, sequelize, DataTypes) {
         }
       },
 
+      includeTargetAudiences: {
+        include: [{
+          model: db.TargetAudience,
+          as: 'targetAudiences',
+          required: false,
+          attributes: ['id', 'name'],
+          order: [
+            ['name', 'ASC']
+          ],
+          through: {attributes: []},
+        }]
+      },
+
+      selectTargetAudiences: function (audiences) {
+        return {
+          include: [{
+            model: db.TargetAudience,
+            as: 'targetAudiences',
+            attributes: ['id', 'name'],
+            order: [
+              ['name', 'ASC']
+            ],
+            required: true,
+            through: {attributes: []},
+            where: {
+              id: audiences
+            }
+          }]
+        }
+      },
+      
+      includeGrants: {
+        include: [{
+          model: db.Grant,
+          as: 'grants',
+          required: false,
+          attributes: ['id', 'name', 'url'],
+          order: [
+            ['name', 'ASC']
+          ],
+          through: {attributes: []},
+        }]
+      },
+
+      selectGrants: function (grants) {
+        return {
+          include: [{
+            model: db.Grant,
+            as: 'grants',
+            attributes: ['id', 'name', 'url'],
+            order: [
+              ['name', 'ASC']
+            ],
+            required: true,
+            through: {attributes: []},
+            where: {
+              id: grants
+            }
+          }]
+        }
+      },
+
       // vergelijk getRunning()
       sort: function (sort) {
 
@@ -954,6 +994,47 @@ module.exports = function (db, sequelize, DataTypes) {
             ['startDate', 'ASC']
           ]
         }]
+      },
+      search: (search) => {
+        const query = {
+          where: {}
+        }
+        const criteria = Array.isArray(search.criteria) ? search.criteria : [search.criteria];
+        const options = search.options
+
+        if (!criteria || !criteria.length) return query
+
+        let operation = Sequelize.Op.or
+        if (options && options.andOr === 'and') {
+          operation = Sequelize.Op.and
+        }
+
+        // Wrap each criteria with a like operation
+        query.where[operation] = criteria.map(query => {
+          return Object.keys(query).reduce((acc, key) => {
+            acc[key] = {
+              [Sequelize.Op.like]: `%${query[key]}%`
+            }
+            return acc
+          }, {})
+        })
+
+        return query
+      },
+
+      hideArchive: {
+        where: {
+          archivedAt: null
+        }
+      },
+
+      showArchive: {
+        where: {
+          [Sequelize.Op.or]: [
+            { archivedAt: { [Sequelize.Op.is]: null }},
+            { archivedAt: { [Sequelize.Op.not]: null }}
+          ]
+        }
       }
     }
   }
@@ -971,6 +1052,7 @@ module.exports = function (db, sequelize, DataTypes) {
     this.hasOne(models.Vote, {as: 'userVote', foreignKey: 'ideaId'});
     this.belongsTo(models.Site);
     this.belongsToMany(models.Tag, {through: 'ideaTags', constraints: false});
+    this.belongsToMany(models.TargetAudience, {through: 'ideaTargetAudiences', constraints: false});
   }
 
   Idea.getRunning = function (sort, extraScopes) {
