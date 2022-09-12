@@ -2,6 +2,7 @@
 // check action on user roles
 // ----------------------------------------------------------------------------------------------------
 
+const _ = require('lodash')
 const config = require('config');
 const db     = require('../../../db'); // TODO: dit moet dus anders
 
@@ -19,7 +20,7 @@ module.exports = function useReqUser( req, res, next ) {
       result.auth.user = req.user;
     });
   } else {
-    if (req.results) {
+    if (req.results && !_.isEmpty(req.results)) {
       req.results.auth = req.results.auth || {};
       req.results.auth.user = req.user }
     ;
