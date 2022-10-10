@@ -2,14 +2,13 @@ const createError = require('http-errors');
 const db = require('../../db');
 const auth = require('../../middleware/sequelize-authorization-middleware');
 const pagination = require('../../middleware/pagination');
-const searchResults = require('../../middleware/search-results');
+const searchResults = require('../../middleware/search-results-static');
 
 const router = require('express-promise-router')({ mergeParams: true });
 
 // scopes: for all get requests
 router
   .all('*', function(req, res, next) {
-
     req.scope = ['defaultScope', 'withIdea'];
     req.scope.push({ method: ['forSiteId', req.params.siteId] });
 
@@ -119,7 +118,7 @@ router.route('/')
 
     if (!req.idea) return next(createError(400, 'Inzending niet gevonden'));
     // todo: dit moet een can functie worden
-    if (req.idea.status != 'OPEN') return next(createError(400, 'Reactie toevoegen is niet mogelijk bij planen met status: ' + req.idea.status));
+    if (req.user.role != 'admin' && req.idea.status != 'OPEN') return next(createError(400, 'Reactie toevoegen is niet mogelijk bij planen met status: ' + req.idea.status));
     next();
   })
   .post(function(req, res, next) {
@@ -137,10 +136,13 @@ router.route('/')
   })
   .post(function(req, res, next) {
 
+    let userId = req.user.id;
+    if (req.user.role == 'admin' && req.body.userId) userId = req.body.userId;
+    
     let data = {
       ...req.body,
       ideaId: req.params.ideaId,
-      userId: req.user.id,
+      userId,
     };
 
 
@@ -192,10 +194,13 @@ router.route('/:argumentId(\\d+)')
   })
 
   // delete argument
-  // ---------------
-  .delete(auth.can('Argument', 'delete'))
+  // --------------
+  .delete(auth.useReqUser)
   .delete(function(req, res, next) {
-    req.results
+    const argument = req.results;
+    if (!( argument && argument.can && argument.can('delete') )) return next( new Error('You cannot delete this argument') );
+
+    argument
       .destroy()
       .then(() => {
         res.json({ 'argument': 'deleted' });

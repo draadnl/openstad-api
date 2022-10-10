@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const merge = require('merge');
 const fetch = require('node-fetch');
 const db = require('../db');
+const OAuthApi = require('../services/oauth-api');
 
 /**
  * Get user from jwt or fixed token and validate with auth server
@@ -12,26 +13,30 @@ const db = require('../db');
  * @returns {Promise<*>}
  */
 module.exports = async function getUser( req, res, next ) {
-	try {
-		if (!req.headers['x-authorization']) {
-			return nextWithEmptyUser(req, res, next);
-		}
-		const userId = getUserId(req.headers['x-authorization']);
-		const which = req.query.useOauth || 'default';
-		const siteOauthConfig = (req.site && req.site.config && req.site.config.oauth && req.site.config.oauth[which]) || {};
-		if(userId === null) {
-			return nextWithEmptyUser(req, res, next);
-		}
+  try {
 
-		const userEntity = await getUserInstance(userId, siteOauthConfig);
-		req.user = userEntity
-		// Pass user entity to template view.
-		res.locals.user = userEntity;
-		next();
+    if (!req.headers['x-authorization']) {
+      return nextWithEmptyUser(req, res, next);
+    }
+
+    const userId = getUserId(req.headers['x-authorization']);
+
+    const which = req.query.useOauth || 'default';
+    let siteConfig = req.site && merge({}, req.site.config, { id: req.site.id });
+
+    if(userId === null) {
+      return nextWithEmptyUser(req, res, next);
+    }
+
+    const userEntity = await getUserInstance({ siteConfig, which, userId });
+    req.user = userEntity
+    // Pass user entity to template view.
+    res.locals.user = userEntity;
+    next();
   } catch(error) {
-		console.error(error);
-		next(error);
-	}
+    console.error(error);
+    next(error);
+  }
 }
 
 /**
@@ -89,45 +94,39 @@ function parseJwt(authorizationHeader) {
 /**
  * Get user from api database and auth server and combine to one user object.
  * @param user
- * @param siteOauthConfig
+ * @param siteConfig
  * @returns {Promise<{}|{externalUserId}|*>}
  */
-async function getUserInstance( user, siteOauthConfig ) {
-	const dbUser = await db.User.findByPk(user.id);
+async function getUserInstance({ siteConfig, which = 'default', userId }) {
 
-	if (!dbUser || !dbUser.externalUserId || !dbUser.externalAccessToken) {
-		return user.fixed ? dbUser : {};
-	}
+  let dbUser;
+  
+  try {
 
-	// get the user info using the access token
-	const authServerUrl = siteOauthConfig['auth-internal-server-url'] || config.authorization['auth-server-url'];
-	const authServerGetUserPath = siteOauthConfig['auth-server-get-user-path'] || config.authorization['auth-server-get-user-path'];
-	const authClientId = siteOauthConfig['auth-client-id'] || config.authorization['auth-client-id'];
-	const url = (authServerUrl + authServerGetUserPath).replace(/\[\[clientId\]\]/, authClientId);
+    dbUser = await db.User.findByPk(userId.id);
 
-	try {
-		const response = await fetch(url, {
-			method: 'get',
-			headers: {
-				authorization: 'Bearer ' + dbUser.externalAccessToken,
-			},
-			mode: 'cors',
-		});
+    if (!dbUser || !dbUser.externalUserId || !dbUser.externalAccessToken) {
+      return userId.fixed ? dbUser : {};
+    }
 
-		if (!response.ok) {
-			throw new Error('Error fetching user')
-		}
+  } catch(error) {
+    console.log(error);
+    throw error;
+  }
 
-		const authUser = response.json();
+  try {
 
-		authUser.role = authUser.role || user.role || 'member';
+    let oauthUser = await OAuthApi.fetchUser({ siteConfig, which, token: dbUser.externalAccessToken });
 
-		return merge(dbUser, authUser);
-	} catch(error) {
-		// Todo: Do we always need to reset user token when an error occurs?
-		console.error(error);
-		return await resetUserToken(dbUser);
-	}
+    let mergedUser = merge(dbUser, oauthUser);
+    mergedUser.role = mergedUser.role || ((mergedUser.email || mergedUser.phoneNumber || mergedUser.hashedPhoneNumber) ? 'member' : 'anonymous');
+    
+    return mergedUser;
+
+  } catch(error) {
+    return await resetUserToken(dbUser);
+  }
+
 }
 
 /**
@@ -142,5 +141,5 @@ async function resetUserToken(user) {
 		externalAccessToken: null
 	});
 
-	return {};
+  return {};
 }

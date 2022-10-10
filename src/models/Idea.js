@@ -1,25 +1,23 @@
-var Sequelize = require('sequelize');
-var co = require('co')
+const Sequelize = require('sequelize');
+const getSequelizeConditionsForFilters = require('./../util/getSequelizeConditionsForFilters');
+const co = require('co')
 , config = require('config')
 , moment = require('moment-timezone')
 , pick = require('lodash/pick')
 , Promise = require('bluebird');
 
-var sanitize = require('../util/sanitize');
-// var ImageOptim    = require('../ImageOptim');
-var notifications = require('../notifications');
+const sanitize = require('../util/sanitize');
+const notifications = require('../notifications');
 
 const merge = require('merge');
 
-var argVoteThreshold = config.ideas && config.ideas.argumentVoteThreshold;
+const argVoteThreshold = config.ideas && config.ideas.argumentVoteThreshold;
 const userHasRole = require('../lib/sequelize-authorization/lib/hasRole');
 const roles = require('../lib/sequelize-authorization/lib/roles');
 const getExtraDataConfig = require('../lib/sequelize-authorization/lib/getExtraDataConfig');
 const hasModeratorRights = (user) => {
   return userHasRole(user, 'editor', self.userId) || userHasRole(user, 'admin', self.userId) || userHasRole(user, 'moderator', self.userId);
 }
-
-
 
 function hideEmailsForNormalUsers(args) {
   return args.map((argument) => {
@@ -38,9 +36,7 @@ function hideEmailsForNormalUsers(args) {
 }
 
 module.exports = function (db, sequelize, DataTypes) {
-
   var Idea = sequelize.define('idea', {
-
     siteId: {
       type: DataTypes.INTEGER,
       auth:  {
@@ -100,6 +96,9 @@ module.exports = function (db, sequelize, DataTypes) {
         var date = this.getDataValue('endDate');
         if (this.site && this.site.config && this.site.config.votes && this.site.config.votes.isActiveTo) {
           return this.site.config.votes.isActiveTo;
+        } else if (this.site && this.site.config && this.site.config.ideas && this.site.config.ideas.automaticallyUpdateStatus && this.site.config.ideas.automaticallyUpdateStatus.isActive) {
+          let days = this.site.config.ideas.automaticallyUpdateStatus.afterXDays || 0;
+          return moment(this.createdAt).add(days, 'days');
         } else {
           return date;
         }
@@ -278,7 +277,7 @@ module.exports = function (db, sequelize, DataTypes) {
       allowNull: true,
       set: function (budget) {
         budget = budget ? budget : null
-        this.setDataValue('budget', budget);
+        this.setDataValue('budget', parseInt(budget, 10));
       }
     },
 
@@ -395,7 +394,7 @@ module.exports = function (db, sequelize, DataTypes) {
 
     hooks: {
 
-      // onderstaand is een workaround: bij een delete wordt wel de vvalidatehook aangeroepen, maar niet de beforeValidate hook. Dat lijkt een bug.
+      // onderstaand is een workaround: bij een delete wordt wel de validatehook aangeroepen, maar niet de beforeValidate hook. Dat lijkt een bug.
       beforeValidate: beforeValidateHook,
       beforeDestroy: beforeValidateHook,
 
@@ -620,7 +619,7 @@ module.exports = function (db, sequelize, DataTypes) {
         } else {
           return {
             where: sequelize.or(
-              {viewableByRole: 'all' },
+              { viewableByRole: 'all' },
               { viewableByRole: null },
               { viewableByRole: roles[userRole] || '' },
             )
@@ -630,9 +629,6 @@ module.exports = function (db, sequelize, DataTypes) {
 
       // defaults
       default: {
-        include: [{
-          model: db.Site,
-        }]
       },
 
       api: {},
@@ -657,10 +653,6 @@ module.exports = function (db, sequelize, DataTypes) {
       },
 
       filter: function (filtersInclude, filtersExclude) {
-        let conditions = {
-          [Sequelize.Op.and]:[]
-        };
-
         const filterKeys = [
           {
             'key': 'id'
@@ -681,63 +673,8 @@ module.exports = function (db, sequelize, DataTypes) {
             'extraData': true
           },
         ];
-
-        filterKeys.forEach((filter, i) => {
-          //first add include filters
-          if (filtersInclude) {
-            let filterValue = filtersInclude[filter.key];
-
-            if (filtersInclude[filter.key]) {
-              if (filter.extraData) {
-                filterValue = Array.isArray(filterValue) ? filterValue : [filterValue];
-
-                filterValue.forEach((value, key)=>{
-                  conditions[Sequelize.Op.and].push({
-                    [Sequelize.Op.and] : sequelize.literal(`extraData->"$.${filter.key}"='${value}'`)
-                  });
-                });
-
-              } else {
-                conditions[Sequelize.Op.and].push({
-                  [filter.key] : filterValue
-                });
-              }
-            }
-          }
-
-          //add exclude filters
-          if (filtersExclude) {
-            let excludeFilterValue = filtersExclude[filter.key];
-
-            if (excludeFilterValue) {
-              if (filter.extraData) {
-                excludeFilterValue = Array.isArray(excludeFilterValue) ? excludeFilterValue : [excludeFilterValue];
-
-                //filter out multiple conditions
-                excludeFilterValue.forEach((value, key)=>{
-                  conditions[Sequelize.Op.and].push({
-                    [Sequelize.Op.and] : sequelize.literal(`extraData->"$.${filter.key}"!='${value}'`)
-                  });
-
-
-                })
-
-              } else {
-                /*
-                TODO
-                conditions[Sequelize.Op.and].push({
-                  [filter.key] : filterValue
-                });
-                */
-              }
-            }
-          }
-        });
-
-        return {
-          where: sequelize.and(conditions)
-          //where: sequelize.and(conditions)
-        }
+        
+        return getSequelizeConditionsForFilters(filterKeys, filtersInclude, sequelize, filtersExclude);
       },
 
       // vergelijk getRunning()
@@ -856,9 +793,6 @@ module.exports = function (db, sequelize, DataTypes) {
       },
 
       includeVoteCount: {
-        include: [{
-          model: db.Site,
-        }],
         attributes: {
           include: [
             voteCount('yes'),
@@ -868,9 +802,6 @@ module.exports = function (db, sequelize, DataTypes) {
       },
 
       includeArgsCount: {
-        include: [{
-          model: db.Site,
-        }],
         attributes: {
           include: [
             argCount('argCount')
@@ -1468,12 +1399,14 @@ module.exports = function (db, sequelize, DataTypes) {
             // Automatically determine `endDate`
             if (instance.changed('startDate')) {
               var duration = (instance.config && instance.config.ideas && instance.config.ideas.duration) || 90;
+              if (this.site && this.site.config && this.site.config.ideas && this.site.config.ideas.automaticallyUpdateStatus && this.site.config.ideas.automaticallyUpdateStatus.isActive) {
+                duration = this.site.config.ideas.automaticallyUpdateStatus.afterXDays || 0;
+              }
               var endDate = moment(instance.startDate).add(duration, 'days').toDate();
               instance.setDataValue('endDate', endDate);
             }
 
             return resolve();
-
           }).catch(err => {
             throw err;
           })

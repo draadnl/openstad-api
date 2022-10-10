@@ -1,7 +1,6 @@
 const Promise     = require('bluebird');
 const express     = require('express');
 const createError = require('http-errors')
-const moment      = require('moment');
 const db          = require('../../db');
 const auth        = require('../../middleware/sequelize-authorization-middleware');
 const config      = require('config');
@@ -9,7 +8,7 @@ const merge       = require('merge');
 const bruteForce = require('../../middleware/brute-force');
 const {Op} = require('sequelize');
 const pagination = require('../../middleware/pagination');
-const searchResults = require('../../middleware/search-results');
+const searchResults = require('../../middleware/search-results-static');
 
 const router = express.Router({mergeParams: true});
 
@@ -33,15 +32,7 @@ router.route('*')
 
   // mag er gestemd worden
 	.post(function(req, res, next) {
-		let isActive = req.site.config.votes.isActive;
-		if ( isActive == null && req.site.config.votes.isActiveFrom && req.site.config.votes.isActiveTo ) {
-			isActive = moment().isAfter(req.site.config.votes.isActiveFrom) && moment().isBefore(req.site.config.votes.isActiveTo)
-		}
-
-		if (!isActive) {
-			return next(createError(403, 'Stemmen is gesloten'));
-		}
-
+		if (!req.site.isVoteActive()) return next(createError(403, 'Stemmen is gesloten'));
 		return next();
 	})
 
@@ -180,7 +171,7 @@ router.route('/*')
 			.scope(req.scope)
 			.findAll({ where: { userId: req.user.id } })
 			.then(found => {
-				if (req.site.config.votes.voteType !== 'likes' && req.site.config.votes.withExisting == 'error' && found && found.length ) throw new Error('Je hebt al gestemd');
+				if (req.site.config.votes.voteType !== 'likes' && req.site.config.votes.withExisting == 'error' && found && found.length ) throw createError(403, 'Je hebt al gestemd');
 				req.existingVotes = found.map(entry => entry.toJSON());
 				return next();
 			})
@@ -206,7 +197,11 @@ router.route('/*')
     // merge
     if (req.site.config.votes.withExisting == 'merge') {
       // no double votes
-      if (req.existingVotes.find( newVote => votes.find( oldVote => oldVote.ideaId == newVote.ideaId) )) throw new Error('Je hebt al gestemd');
+      try {
+        if (req.existingVotes.find( newVote => votes.find( oldVote => oldVote.ideaId == newVote.ideaId) )) throw createError(403, 'Je hebt al gestemd');
+      } catch (err) {
+        return next(err);
+      }
       // now merge
       votes = votes
         .concat(
@@ -279,7 +274,7 @@ router.route('/*')
 					.findAll({ where: whereClause })
 					.then(found => {
 						if (found && found.length > 0) {
-							throw new Error('Je hebt al gestemd');
+							throw createError(403, 'Je hebt al gestemd');
 						}
 						return next();
 					})
@@ -316,10 +311,43 @@ router.route('/*')
 		return next();
   })
 
+  // validaties voor voteType=count-per-theme
+	.post(function(req, res, next) {
+		if (req.site.config.votes.voteType != 'count-per-theme') return next();
+
+    let themes = req.site.config.votes.themes || [];
+
+    let totalNoOfVotes = 0;
+    req.votes.forEach((vote) => {
+			let idea = req.ideas.find(idea => idea.id == vote.ideaId);
+      totalNoOfVotes += idea ? 1 : 0;
+      let themename = idea && idea.extraData && idea.extraData.theme;
+      let theme = themes.find( theme => theme.value == themename );
+      if (theme) {
+	      theme.noOf = theme.noOf || 0;
+        theme.noOf++;
+      }
+		});
+
+    let isOk = true;
+    themes.forEach((theme) => {
+	    theme.noOf = theme.noOf || 0;
+		  if (theme.noOf < theme.minIdeas || theme.noOf > theme.maxIdeas) {
+        isOk = false;
+		  }
+    });
+
+		if (( req.site.config.votes.minIdeas && totalNoOfVotes < req.site.config.votes.minIdeas ) || ( req.site.config.votes.maxIdeas && totalNoOfVotes > req.site.config.votes.maxIdeas )) {
+      isOk = false;
+		}
+
+		return next( isOk ? null : createError(400, 'Count per thema klopt niet') );
+
+	})
+
   // validaties voor voteType=budgeting-per-theme
 	.post(function(req, res, next) {
 		if (req.site.config.votes.voteType != 'budgeting-per-theme') return next();
-    let budget = 0;
     let themes = req.site.config.votes.themes || [];
 		req.votes.forEach((vote) => {
 			let idea = req.ideas.find(idea => idea.id == vote.ideaId);
@@ -362,10 +390,7 @@ router.route('/*')
 				break;
 
 			case 'count':
-				req.votes.map( vote => actions.push({ action: 'create', vote: vote}) );
-				req.existingVotes.map( vote => actions.push({ action: 'delete', vote: vote}) );
-				break;
-
+			case 'count-per-theme':
 			case 'budgeting':
 			case 'budgeting-per-theme':
 				req.votes.map( vote => actions.push({ action: 'create', vote: vote}) );

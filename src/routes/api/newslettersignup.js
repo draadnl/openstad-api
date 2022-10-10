@@ -5,19 +5,21 @@ const auth = require('../../middleware/sequelize-authorization-middleware');
 const mail = require('../../lib/mail');
 const generateToken = require('../../util/generate-token');
 const pagination = require('../../middleware/pagination');
-const searchResults = require('../../middleware/search-results');
+const searchResults = require('../../middleware/search-results-static');
 
 const router = express.Router({ mergeParams: true });
 
 // scopes: for all get requests
 router
   .all('*', function(req, res, next) {
-    req.scope = [{ method: ['forSiteId', req.site.id] }];
+    req.scope = [{ method: ['forSiteId', req.site.id] }, 'includeSite'];
+
     return next();
   })
   .all('*', function(req, res, next) {
     if (!req.body) return next();
     // incomming data is too flat when send as enctype=application/x-www-form-urlencoded
+    // todo: geldt dat dan niet ook voor users en idas, en moet dis dan niet een generieke middleware worden?
     let data = { extraData: {} };
     Object.keys(req.body).forEach((key) => {
       let match = key.match(/^extraData\.([a-zA-Z][a-zA-Z0-9_]*)/);
@@ -50,14 +52,14 @@ router.route('/$')
     db.NewsletterSignup
       .scope(...req.scope)
 			.findAndCountAll({ where, ...dbQuery })
-      .then( (result) => {
+      .then((result) => {
         req.results = result.rows;
         req.dbQuery.count = result.count;
         return next();
       })
       .catch(next);
   })
-	.get(auth.useReqUser)
+  .get(auth.useReqUser)
 	.get(searchResults)
 	.get(pagination.paginateResults)
 	.get(function(req, res, next) {
@@ -129,13 +131,12 @@ router.route('/$')
     data.externalUserId = req.user.externalUserId;
     data.signoutToken = generateToken({ length: 256 });
 
-
     db.NewsletterSignup
       .create(data)
       .then((result) => {
         res.json(result);
         if (!result.confirmed) {
-          mail.sendNewsletterSignupConfirmationMail(data, req.user, req.site); // todo: optional met config?
+          mail.sendNewsletterSignupConfirmationMail(data, req.site, req.user); // todo: optional met config?
         }
       })
       .catch(next);
@@ -233,8 +234,8 @@ router.route('/:newslettersignupId(\\d+)')
       .catch(next);
   })
 
-// delete idea
-// ---------
+// delete newslettersignup
+// -----------------------
   .delete(auth.can('NewsletterSignup', 'delete'))
   .delete(function(req, res, next) {
     req.results

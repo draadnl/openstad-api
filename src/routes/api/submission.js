@@ -3,7 +3,7 @@ const express = require('express');
 const db      = require('../../db');
 const auth = require('../../middleware/sequelize-authorization-middleware');
 const pagination = require('../../middleware/pagination');
-const searchResults = require('../../middleware/search-results');
+const searchResults = require('../../middleware/search-results-static');
 
 let router = express.Router({mergeParams: true});
 
@@ -13,16 +13,21 @@ router.route('/')
 // --------------
 	.get(auth.can('Submission', 'list'))
 	.get(pagination.init)
-	.get(function(req, res, next) {
+	.get(function (req, res, next) {
 		let where = {};
 		req.scope = ['defaultScope'];
+		
+		if (req.query.filter || req.query.exclude) {
+			req.scope.push({method: ['filter', JSON.parse(req.query.filter), req.query.exclude]});
+		}
+		
 		db.Submission
 			.scope(...req.scope)
-			.findAndCountAll({ where, offset: req.dbQuery.offset, limit: req.dbQuery.limit })
-			.then(function( result ) {
-        req.results = result.rows;
-        req.dbQuery.count = result.count;
-        return next();
+			.findAndCountAll({where, offset: req.dbQuery.offset, limit: req.dbQuery.limit, order: req.dbQuery.order})
+			.then(function (result) {
+				req.results       = result.rows;
+				req.dbQuery.count = result.count;
+				return next();
 			})
 			.catch(next);
 	})
@@ -37,11 +42,15 @@ router.route('/')
 // ---------------
   .post(auth.can('Submission', 'create'))
 	.post(function(req, res, next) {
-		let data = {
+		const data = {
 			submittedData     : req.body.submittedData,
 			siteId      			: req.params.siteId,
 			userId      			: req.user.id,
 		};
+
+		if (req.body.formName) {
+			data.formName = req.body.formName
+		}
 
 		db.Submission
 			.authorizeData(data, 'create', req.user)
@@ -64,8 +73,9 @@ router.route('/')
 
 			db.Submission
 				.scope(...req.scope)
-		//		.find({ where })
-        .find()
+				.findOne({
+				    where: {id: submissionId, siteId: req.params.siteId}
+				})
 				.then(found => {
 					if ( !found ) throw new Error('Submission not found');
 					req.results = found;
