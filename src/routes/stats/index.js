@@ -13,6 +13,9 @@ router.use( '/site/:siteId(\\d+)/vote', require('./vote') );
 // idea
 router.use( '/site/:siteId(\\d+)/idea', require('./idea') );
 
+// event
+router.use( '/site/:siteId(\\d+)/event', require('./event') );
+
 // argument
 router.use( '/site/:siteId(\\d+)/argument', require('./argument') );
 
@@ -24,5 +27,3 @@ router.use( '/site/:siteId(\\d+)/overview', require('./overview') );
 
 
 module.exports = router;
-
-
