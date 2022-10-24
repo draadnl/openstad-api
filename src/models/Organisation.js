@@ -28,7 +28,7 @@ module.exports = function (db, sequelize, DataTypes) {
 
       district: {
         type: DataTypes.STRING(255),
-        allowNull: false,
+        allowNull: true,
       },
 
       phone: {

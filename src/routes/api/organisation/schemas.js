@@ -5,7 +5,7 @@ exports.createOrganisation = Joi.object({
   street: Joi.string().max(2048),
   zip: Joi.string().regex(/^[1-9][0-9]{3} ?(?!sa|sd|ss)[a-zA-Z]{2}$/),
   phone: Joi.string().max(10).trim(),
-  district: Joi.string().required(),
+  district: Joi.string().allow('', null),
   email: Joi.string().email(),
   website: Joi.string().uri(),
   facebook: Joi.string()
@@ -40,7 +40,7 @@ exports.updateOrganisation = Joi.object({
   name: Joi.string(),
   street: Joi.string().max(2048),
   zip: Joi.string().regex(/^[1-9][0-9]{3} ?(?!sa|sd|ss)[a-zA-Z]{2}$/),
-  district: Joi.string(),
+  district: Joi.string().allow('', null),
   phone: Joi.string().trim().max(10),
   email: Joi.string().email(),
   website: Joi.string().uri(),
