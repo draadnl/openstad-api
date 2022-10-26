@@ -47,6 +47,9 @@ router.use(
 // submissions
 router.use('/site/:siteId(\\d+)/submission', require('./submission'));
 
+// notification
+router.use('/site/:siteId(\\d+)/notification', require('./notification'));
+
 // vote
 router.use('/site/:siteId(\\d+)/vote', require('./vote'));
 
