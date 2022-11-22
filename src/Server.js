@@ -26,7 +26,7 @@ module.exports  = {
       this.app.set('env', process.env.NODE_APP_INSTANCE || 'development');
 
       if (process.env.REQUEST_LOGGING === 'ON') {
-        this.app.use(morgan('dev'));
+        this.app.use(morgan('common'));
       }
 
       if( reportErrors ) {
