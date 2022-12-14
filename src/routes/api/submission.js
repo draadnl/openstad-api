@@ -16,6 +16,8 @@ router.route('/')
 		let where = {};
 		req.scope = ['defaultScope'];
 		
+		req.scope.push({method: ['forSiteId', req.params.siteId]});
+		
 		if (req.query.filter || req.query.exclude) {
 			req.scope.push({method: ['filter', JSON.parse(req.query.filter), req.query.exclude]});
 		}
