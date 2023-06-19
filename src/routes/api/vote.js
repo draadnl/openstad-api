@@ -180,7 +180,9 @@ router.route('/*')
 			.scope(req.scope)
 			.findAll({ where: { userId: req.user.id } })
 			.then(found => {
-				if (req.site.config.votes.voteType !== 'likes' && req.site.config.votes.withExisting == 'error' && found && found.length ) throw new Error('Je hebt al gestemd');
+				if (
+						//req.site.config.votes.voteType !== 'likes' &&
+						req.site.config.votes.withExisting == 'error' && found && found.length ) throw new Error('Oei, we zien dat je al hebt gestemd. Wil je je stem wijzigen? Mail ons dan even: openstad@haarlemmermeer.nl');
 				req.existingVotes = found.map(entry => entry.toJSON());
 				return next();
 			})
