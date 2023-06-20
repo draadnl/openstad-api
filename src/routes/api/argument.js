@@ -118,7 +118,7 @@ router.route('/')
 
     if (!req.idea) return next(createError(400, 'Inzending niet gevonden'));
     // todo: dit moet een can functie worden
-    if (req.idea.status != 'OPEN') return next(createError(400, 'Reactie toevoegen is niet mogelijk bij planen met status: ' + req.idea.status));
+    //if (req.idea.status != 'OPEN') return next(createError(400, 'Reactie toevoegen is niet mogelijk bij planen met status: ' + req.idea.status));
     next();
   })
   .post(function(req, res, next) {
