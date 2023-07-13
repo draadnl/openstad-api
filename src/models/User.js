@@ -333,8 +333,8 @@ module.exports = function (db, sequelize, DataTypes) {
         // this should use site.config.allowUseOfNicknames but that implies loading the site for every time a user is shown which would be too slow
         // therefore createing nicknames is dependendt on site.config.allowUseOfNicknames; once you have created a nickName it will be shown here no matter what
         var nickName = this.getDataValue('nickName');
-        var fullName = this.fullName;
-        return nickName || fullName || undefined;
+        var firstName = this.getDataValue('firstName') || '';
+        return nickName || firstName || undefined;
       }
     },
 
@@ -687,7 +687,7 @@ module.exports = function (db, sequelize, DataTypes) {
         detailsViewableByRole: 'editor',
         viewableByRole: 'admin',
         email: null,
-        nickName: null, 
+        nickName: null,
         firstName: ( config.users && config.users.anonymize && config.users.anonymize.firstName ) || 'Gebruiker',
         lastName: ( config.users && config.users.anonymize && config.users.anonymize.lastName ) || 'verwijderd',
         gender: null,
