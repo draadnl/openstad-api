@@ -16,8 +16,8 @@ module.exports = function( db, sequelize, DataTypes ) {
       defaultValue: '',
       validate: {
         len: {
-          args: [0, 255],
-          msg: 'Titel moet tussen 0 en 255 tekens lang zijn'
+          args: [2, 255],
+          msg: 'Titel moet tussen 2 en 255 tekens lang zijn'
         }
       },
       set: function( text ) {
@@ -87,7 +87,7 @@ module.exports = function( db, sequelize, DataTypes ) {
     },
 
     type: {
-      type: DataTypes.ENUM('continuous', 'enum-buttons', 'enum-radio', 'a-to-b'),
+      type: DataTypes.ENUM('continuous', 'enum-buttons', 'enum-radio', 'a-to-b', 'input', 'textarea', 'multiple-choice'),
       defaultValue: 'continuous',
       allowNull: false
     },
@@ -137,6 +137,18 @@ module.exports = function( db, sequelize, DataTypes ) {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    
+    validation: {
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: {},
+    },
+    
+    extraConfig: {
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: {},
+    }
 
   }, {
 

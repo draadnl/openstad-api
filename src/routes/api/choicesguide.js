@@ -167,6 +167,8 @@ router.route('/:choicesGuideId(\\d+)$')
               minLabel: question.minLabel,
               maxLabel: question.maxLabel,
               seqnr: question.seqnr,
+              validation: question.validation,
+              extraConfig: question.extraConfig,
             });
           });
         }
@@ -564,6 +566,8 @@ router.route('/:choicesGuideId(\\d+)/questiongroup/:questionGroupId(\\d+)/questi
       minLabel: req.body.minLabel,
       maxLabel: req.body.maxLabel,
       seqnr: req.body.seqnr,
+      validation: req.body.validation,
+      extraConfig: req.body.extraConfig,
     };
     req.question
 			.authorizeData(data, 'update', req.user)
@@ -616,7 +620,7 @@ router.route('/:choicesGuideId(\\d+)(/questiongroup/:questionGroupId(\\d+))?/res
 // ------------
 
 	.get(auth.can('ChoicesGuideResult', 'list'))
-			 .get(auth.useReqUser)
+	.get(auth.useReqUser)
 	.get(function(req, res, next) {
 		let where = { choicesGuideId: req.choicesguide.id };
 		let choicesGuideQuestionGroupId = parseInt(req.params.choicesGuideQuestionGroupId);
@@ -632,6 +636,8 @@ router.route('/:choicesGuideId(\\d+)(/questiongroup/:questionGroupId(\\d+))?/res
 						extraData: entry.extraData,
 						userFingerprint: entry.userFingerprint,
 						result: entry.result,
+						createdAt: entry.createdAt,
+						updatedAt: entry.updatedAt,
 					};
 					return json;
 				});
@@ -661,10 +667,10 @@ router.route('/:choicesGuideId(\\d+)(/questiongroup/:questionGroupId(\\d+))?/res
 		if (req.choicesguide.config.requiredUserRole == 'member' && ( req.user.role == 'member' || req.user.role === 'editor' || req.user.role === 'moderator' || req.user.role === 'admin' )) {
 			return next();
 		}
-		if (req.choicesguide.config.requiredUserRole == 'editor' && ( req.user.role === 'editor' || req.user.role === 'moderator' || req.user.role === 'admin'  )) {
+		if (req.choicesguide.config.requiredUserRole == 'moderator' && ( req.user.role === 'editor' || req.user.role === 'moderator' || req.user.role === 'admin' )) {
 			return next();
 		}
-		if (req.choicesguide.config.requiredUserRole == 'moderator' && ( req.user.role === 'moderator' || req.user.role === 'admin' )) {
+		if (req.choicesguide.config.requiredUserRole == 'editor' && ( req.user.role === 'editor' || req.user.role === 'admin'  )) {
 			return next();
 		}
 		if (req.choicesguide.config.requiredUserRole == 'admin' && ( req.user.role === 'admin' )) {
