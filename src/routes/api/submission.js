@@ -1,5 +1,6 @@
 const express = require('express');
 const db      = require('../../db');
+const mail = require('../../lib/mail');
 const auth = require('../../middleware/sequelize-authorization-middleware');
 const pagination = require('../../middleware/pagination');
 const searchResults = require('../../middleware/search-results-static');
@@ -45,6 +46,8 @@ router.route('/')
 			submittedData     : req.body.submittedData,
 			siteId      			: req.params.siteId,
 			userId      			: req.user.id,
+			formId					: req.body.formId,
+			ideaId					: parseInt(req.body.ideaId) || null,
 		};
 
 		if (req.body.formName) {
@@ -54,8 +57,18 @@ router.route('/')
 		db.Submission
 			.authorizeData(data, 'create', req.user)
 			.create(data)
-			.then(result => {
+			.then(async result => {
 				res.json(result);
+
+				if(req.body.sendMail === '1') {
+					if (req.body.shouldSendEmailToIdeaUser && data.ideaId) {
+						const idea = await db.Idea.scope('includeUser').findOne({ideaId: data.ideaId});
+
+						mail.sendSubmissionConfirmationMail(result, req.body.emailTemplate, req.body.emailSubject, req.body.submittedData, req.body.titles, req.site, idea.user.email, req.body.recipient);
+					}
+
+					mail.sendSubmissionAdminMail(result, req.body.emailAdminTemplate || 'submission_admin', req.body.emailSubjectAdmin, req.body.submittedData, req.body.titles, req.site);
+				}
 			})
 	})
 
