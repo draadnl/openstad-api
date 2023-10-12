@@ -38,7 +38,7 @@ let defaultSendMailOptions = {
 // generic send mail function
 function sendMail(site, options) {
 
-  if (options.attachments) {
+  if ( !!options && typeof (options.attachments) !== 'undefined' && options.attachments) {
     options.attachments.forEach((entry, index) => {
       options.attachments[index] = {
         filename: entry,
