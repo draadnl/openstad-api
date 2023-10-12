@@ -64,6 +64,9 @@ router.route('/')
 					if (req.body.shouldSendEmailToIdeaUser && data.ideaId) {
 						const idea = await db.Idea.scope('includeUser').findOne({ideaId: data.ideaId});
 
+						console.log( JSON.stringify(idea) );
+						console.log( JSON.stringify(req.body) );
+
 						mail.sendSubmissionConfirmationMail(result, req.body.emailTemplate, req.body.emailSubject, req.body.submittedData, req.body.titles, req.site, idea.user.email, req.body.recipient);
 					}
 
