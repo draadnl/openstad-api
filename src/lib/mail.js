@@ -228,11 +228,7 @@ function sendSubmissionConfirmationMail( submission, template, emailSubject, sub
     throw new Error('template is not defined');
   }
   const html = nunjucks.render(template + '.njk', data);
-  const text = htmlToText.fromString(html, {
-    ignoreImage: true,
-    hideLinkHrefIfSameAsText: true,
-    uppercaseHeadings: false
-  });
+  const text = convertHtmlToText(html);
 
   const attachments = ( site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.attachments ) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.attachments )  || ['logo.png'];
 
