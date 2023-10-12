@@ -38,7 +38,7 @@ let defaultSendMailOptions = {
 // generic send mail function
 function sendMail(site, options) {
 
-  if (options.attachments) {
+  if ( !!options && typeof (options.attachments) !== 'undefined' && options.attachments) {
     options.attachments.forEach((entry, index) => {
       options.attachments[index] = {
         filename: entry,
@@ -236,7 +236,7 @@ function sendSubmissionConfirmationMail( submission, template, emailSubject, sub
     replyTo = (site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.replyTo) ? site.config.ideas.feedbackEmail.replyTo : null;
   }
 
-  sendMail({
+  sendMail(site, {
     to: recipient,
     from: (site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.from) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.from ) || config.email,
     replyTo: replyTo,
@@ -274,7 +274,7 @@ function sendSubmissionAdminMail( submission, template, emailSubject, submittedD
   const attachments = ( site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.attachments ) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.attachments )  || ['logo.png'];
 
 
-  sendMail({
+  sendMail(site,{
     to: (site && site.config && site.config.notifications && site.config.notifications.to) ? site.config.notifications.to : null,
     from: (site && site.config && site.config.notifications && site.config.notifications.from) ? site.config.notifications.from : null,
     replyTo: (site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.replyTo) ? site.config.ideas.feedbackEmail.replyTo : null,
