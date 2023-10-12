@@ -46,7 +46,7 @@ router.route('/')
 			submittedData     : req.body.submittedData,
 			siteId      			: req.params.siteId,
 			userId      			: req.user.id,
-			formId					: req.body.formId,
+			formName					: req.body.formName,
 			ideaId					: parseInt(req.body.ideaId) || null,
 		};
 
