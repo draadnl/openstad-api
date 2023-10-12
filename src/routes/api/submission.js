@@ -49,6 +49,7 @@ router.route('/')
 			siteId      			: req.params.siteId,
 			userId      			: req.body.userId,
 			formId					: req.body.formId,
+			formName					: req.body.formName,
 			ideaId					: parseInt(req.body.ideaId) || null,
 		};
 
