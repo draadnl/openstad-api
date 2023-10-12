@@ -225,7 +225,7 @@ function sendSubmissionConfirmationMail( submission, template, emailSubject, sub
     URL: url,
   };
   if(!template) {
-    throw new Error('template is not defined');
+    throw new Error('template is not defined'); 
   }
   const html = nunjucks.render(template + '.njk', data);
   const text = htmlToText.fromString(html, {
