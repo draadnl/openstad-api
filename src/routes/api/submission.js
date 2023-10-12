@@ -4,6 +4,8 @@ const mail = require('../../lib/mail');
 const auth = require('../../middleware/sequelize-authorization-middleware');
 const pagination = require('../../middleware/pagination');
 const searchResults = require('../../middleware/search-results-static');
+const merge = require("merge");
+const config = require("config");
 
 let router = express.Router({mergeParams: true});
 
@@ -16,11 +18,11 @@ router.route('/')
 	.get(function (req, res, next) {
 		let where = {};
 		req.scope = ['defaultScope'];
-		
+
 		if (req.query.filter || req.query.exclude) {
 			req.scope.push({method: ['filter', JSON.parse(req.query.filter), req.query.exclude]});
 		}
-		
+
 		db.Submission
 			.scope(...req.scope)
 			.findAndCountAll({where, offset: req.dbQuery.offset, limit: req.dbQuery.limit, order: req.dbQuery.order})
@@ -62,13 +64,27 @@ router.route('/')
 
 				if(req.body.sendMail === '1') {
 					if (req.body.shouldSendEmailToIdeaUser && data.ideaId) {
-						const idea = await db.Idea.scope('includeUser').findOne({ideaId: data.ideaId});
+						//const idea = await db.Idea.scope('includeUser').findOne({ideaId: data.ideaId});
+						let idea = null;
+
+						if (data.ideaId) {
+							await db.Idea.scope('includeSite').findByPk(data.ideaId)
+								.then( foundIdea => {
+									if (!foundIdea) console.error('Idea niet gevonden')
+									idea = foundIdea;
+								})
+                                .catch( err => {
+									console.error(err);
+								})
+                            }
 
 						console.log( JSON.stringify(idea) );
 						console.log( JSON.stringify(req.body) );
 
-						mail.sendSubmissionConfirmationMail(result, req.body.emailTemplate, req.body.emailSubject, req.body.submittedData, req.body.titles, req.site, idea.user.email, req.body.recipient);
-					}
+                        if ( !!idea ) {
+                            mail.sendSubmissionConfirmationMail(result, req.body.emailTemplate, req.body.emailSubject, req.body.submittedData, req.body.titles, req.site, idea.user.email, req.body.recipient);
+                        }
+                    }
 
 					mail.sendSubmissionAdminMail(result, req.body.emailAdminTemplate || 'submission_admin', req.body.emailSubjectAdmin, req.body.submittedData, req.body.titles, req.site);
 				}
