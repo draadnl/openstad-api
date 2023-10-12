@@ -68,7 +68,7 @@ router.route('/')
 						let idea = null;
 
 						if (data.ideaId) {
-							await db.Idea.scope('includeSite').findByPk(data.ideaId)
+							await db.Idea.scope('includeUser').findByPk(data.ideaId)
 								.then( foundIdea => {
 									if (!foundIdea) console.error('Idea niet gevonden')
 									idea = foundIdea;
