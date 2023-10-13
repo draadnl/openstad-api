@@ -38,7 +38,7 @@ let defaultSendMailOptions = {
 // generic send mail function
 function sendMail(site, options) {
 
-  if ( !!options && typeof (options.attachments) !== 'undefined' && options.attachments) {
+  if ( !!options && typeof (options.attachments) !== 'undefined' && options.attachments ) {
     options.attachments.forEach((entry, index) => {
       options.attachments[index] = {
         filename: entry,
@@ -225,7 +225,7 @@ function sendSubmissionConfirmationMail( submission, template, emailSubject, sub
     URL: url,
   };
   if(!template) {
-    throw new Error('template is not defined'); 
+    throw new Error('template is not defined');
   }
   const html = nunjucks.render(template + '.njk', data);
   const text = convertHtmlToText(html);
@@ -236,7 +236,7 @@ function sendSubmissionConfirmationMail( submission, template, emailSubject, sub
     replyTo = (site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.replyTo) ? site.config.ideas.feedbackEmail.replyTo : null;
   }
 
-  sendMail(site, {
+  sendMail(site,{
     to: recipient,
     from: (site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.from) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.from ) || config.email,
     replyTo: replyTo,

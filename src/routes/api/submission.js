@@ -47,9 +47,8 @@ router.route('/')
 		const data = {
 			submittedData     : req.body.submittedData,
 			siteId      			: req.params.siteId,
-			userId      			: req.body.userId,
-			formId					: req.body.formId,
-			formName					: req.body.formName,
+			userId      			: req.user.id,
+			formName				: req.body.formName,
 			ideaId					: parseInt(req.body.ideaId) || null,
 		};
 
@@ -66,32 +65,20 @@ router.route('/')
 				if(req.body.sendMail === '1') {
 					if (req.body.shouldSendEmailToIdeaUser && data.ideaId) {
 						//const idea = await db.Idea.scope('includeUser').findOne({ideaId: data.ideaId});
-						// let idea = null;
-
-						let user = null;
+						let idea = null;
 
 						if (data.ideaId) {
-							// await db.Idea.scope('includeUser').findByPk(data.ideaId)
-							// 	.then( foundIdea => {
-							// 		if (!foundIdea) console.error('Idea niet gevonden')
-							// 		idea = foundIdea;
-							// 	})
-                            //     .catch( err => {
-							// 		console.error(err);
-							// 	})
+							await db.Idea.scope('includeUser').findByPk(data.ideaId)
+								.then( foundIdea => {
+									if (!foundIdea) console.error('Idea niet gevonden')
+									idea = foundIdea;
+								})
+                                .catch( err => {
+									console.error(err);
+								})
+                            }
 
-							let where = {
-								id: data.userId,
-								siteId: data.siteId,
-							};
-
-							await db.User.findOne({ where }).then( foundUser => {
-									if (!foundUser) console.error('User niet gevonden')
-									user = foundUser;
-								});
-
-
-						console.log( JSON.stringify(user) );
+						console.log( JSON.stringify(idea) );
 						console.log( JSON.stringify(req.body) );
 
                         if ( !!idea ) {
