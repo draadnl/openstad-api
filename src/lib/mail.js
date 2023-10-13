@@ -283,7 +283,7 @@ function sendSubmissionAdminMail( submission, template, emailSubject, submittedD
 
 
   sendMail({
-    to: (site && site.config && site.config.notifications && site.config.notifications.to) ? site.config.notifications.to : null,
+    to: (site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.to) ? site.config.ideas.feedbackEmail.to : null,
     from: (site && site.config && site.config.notifications && site.config.notifications.from) ? site.config.notifications.from : null,
     replyTo: (site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.replyTo) ? site.config.ideas.feedbackEmail.replyTo : null,
     subject: emailSubject || 'Nieuwe inzending ' + sitename,
