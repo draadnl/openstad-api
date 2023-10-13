@@ -38,7 +38,7 @@ let defaultSendMailOptions = {
 // generic send mail function
 function sendMail(site, options) {
 
-  if (options.attachments) {
+  if ( !!options && typeof (options.attachments) !== 'undefined' && options.attachments ) {
     options.attachments.forEach((entry, index) => {
       options.attachments[index] = {
         filename: entry,
@@ -225,22 +225,18 @@ function sendSubmissionConfirmationMail( submission, template, emailSubject, sub
     URL: url,
   };
   if(!template) {
-    throw new Error('template is not defined'); 
+    throw new Error('template is not defined');
   }
   const html = nunjucks.render(template + '.njk', data);
-  const text = htmlToText.fromString(html, {
-    ignoreImage: true,
-    hideLinkHrefIfSameAsText: true,
-    uppercaseHeadings: false
-  });
+  const text = convertHtmlToText(html);
 
-  const attachments = ( site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.attachments ) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.attachments )  || ['logo.png'];
+  const attachments = ( site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.attachments ) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.attachments )  || false;
 
   if(!replyTo) {
     replyTo = (site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.replyTo) ? site.config.ideas.feedbackEmail.replyTo : null;
   }
 
-  sendMail({
+  sendMail(site,{
     to: recipient,
     from: (site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.from) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.from ) || config.email,
     replyTo: replyTo,
@@ -273,16 +269,15 @@ function sendSubmissionAdminMail( submission, template, emailSubject, submittedD
     throw new Error('Notification email is not defined');
   }
   const html = nunjucks.render(template + '.njk', data);
-  const text = htmlToText.fromString(html, {
-    ignoreImage: true,
-    hideLinkHrefIfSameAsText: true,
-    uppercaseHeadings: false
-  });
+  const text = convertHtmlToText(html);
 
-  const attachments = ( site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.attachments ) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.attachments )  || ['logo.png'];
+  const attachments = ( site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.attachments ) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.attachments )  || false;
 
+  console.log( JSON.stringify( site.config ) );
+  console.log( JSON.stringify( site.config.ideas ) );
+  console.log( JSON.stringify( site.config.notifications ) );
 
-  sendMail({
+  sendMail(site, {
     to: (site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.to) ? site.config.ideas.feedbackEmail.to : null,
     from: (site && site.config && site.config.notifications && site.config.notifications.from) ? site.config.notifications.from : null,
     replyTo: (site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.replyTo) ? site.config.ideas.feedbackEmail.replyTo : null,
