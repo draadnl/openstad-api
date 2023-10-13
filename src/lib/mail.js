@@ -230,7 +230,7 @@ function sendSubmissionConfirmationMail( submission, template, emailSubject, sub
   const html = nunjucks.render(template + '.njk', data);
   const text = convertHtmlToText(html);
 
-  const attachments = ( site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.attachments ) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.attachments )  || ['logo.png'];
+  const attachments = ( site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.attachments ) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.attachments )  || false;
 
   if(!replyTo) {
     replyTo = (site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.replyTo) ? site.config.ideas.feedbackEmail.replyTo : null;
@@ -271,8 +271,11 @@ function sendSubmissionAdminMail( submission, template, emailSubject, submittedD
   const html = nunjucks.render(template + '.njk', data);
   const text = convertHtmlToText(html);
 
-  const attachments = ( site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.attachments ) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.attachments )  || ['logo.png'];
+  const attachments = ( site && site.config && site.config.ideas && site.config.ideas.feedbackEmail && site.config.ideas.feedbackEmail.attachments ) || ( config.ideas && config.ideas.feedbackEmail && config.ideas.feedbackEmail.attachments )  || false;
 
+  console.log( JSON.stringify( site.config ) );
+  console.log( JSON.stringify( site.config.ideas ) );
+  console.log( JSON.stringify( site.config.notifications ) );
 
   sendMail(site,{
     to: (site && site.config && site.config.notifications && site.config.notifications.to) ? site.config.notifications.to : null,
