@@ -25,6 +25,7 @@ ENV API_AUTHORIZATION_JWTSECRET=""
 ENV API_AUTHORIZATION_FIXEDAUTHTOKENS=""
 ENV AUTH_API_URL=""
 
+RUN echo "87.233.137.211    auth.wolkenstad.nl" >> /etc/hosts
 
 # Install all base dependencies.# add perl for shell scripts
 RUN apk add --no-cache --update g++ make python musl-dev bash perl perl-dbd-mysql perl-posix-strftime-compiler
