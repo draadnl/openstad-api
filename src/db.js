@@ -23,16 +23,24 @@ if (dbConfig.mysqlSTGeoMode || process.env.MYSQL_ST_GEO_MODE === 'on') {
 	}
 }
 
+const dialectOptions = {
+	charset            : 'utf8',
+	multipleStatements : dbConfig.multipleStatements,
+	socketPath         : dbConfig.socketPath
+}
+
+if (process.env.MYSQL_CA_CERT && process.env.MYSQL_CA_CERT.trim && process.env.MYSQL_CA_CERT.trim()) {
+	dialectOptions.ssl = {
+		rejectUnauthorized: true,
+		ca: [ process.env.MYSQL_CA_CERT ]
+	}
+}
 
 var sequelize = new Sequelize(dbConfig.database, dbConfig.user, dbConfig.password, {
 	dialect        : dbConfig.dialect,
 	host           : dbConfig.host,
 	port					 : dbConfig.port || 3306,
-	dialectOptions : {
-		charset            : 'utf8',
-		multipleStatements : dbConfig.multipleStatements,
-		socketPath         : dbConfig.socketPath
-	},
+	dialectOptions,
 	timeZone       : config.timeZone,
 	logging        : require('debug')('app:db:query'),
  	// logging				 : console.log,
@@ -46,7 +54,7 @@ var sequelize = new Sequelize(dbConfig.database, dbConfig.user, dbConfig.passwor
 	},
 	pool: {
 		min  : 0,
-		max  : 5,
+		max  : dbConfig.maxPoolSize,
 		idle : 10000
 	},
 });

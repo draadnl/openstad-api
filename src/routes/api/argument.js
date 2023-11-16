@@ -50,7 +50,7 @@ router
     let sentiment = req.query.sentiment;
     let where = { id: argumentId };
 
-    if (sentiment && (sentiment == 'against' || sentiment == 'for')) {
+    if (sentiment && (sentiment == 'against' || sentiment == 'for' || sentiment == 'no sentiment')) {
       where.sentiment = sentiment;
     }
 
@@ -83,7 +83,7 @@ router.route('/')
       where.ideaId = ideaId;
     }
     let sentiment = req.query.sentiment;
-    if (sentiment && (sentiment == 'against' || sentiment == 'for')) {
+    if (sentiment && (sentiment == 'against' || sentiment == 'for' || sentiment == 'no sentiment')) {
       where.sentiment = sentiment;
     }
 
@@ -117,6 +117,7 @@ router.route('/')
   .post(function(req, res, next) {
 
     if (!req.idea) return next(createError(400, 'Inzending niet gevonden'));
+    if (!req.idea.publishDate) return next(createError(400, 'Kan geen argument toevoegen aan een concept plan'));
     // todo: dit moet een can functie worden
     if (req.user.role != 'admin' && req.idea.status != 'OPEN') return next(createError(400, 'Reactie toevoegen is niet mogelijk bij planen met status: ' + req.idea.status));
     next();

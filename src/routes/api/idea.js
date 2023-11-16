@@ -9,6 +9,8 @@ const mail = require('../../lib/mail');
 const pagination = require('../../middleware/pagination');
 const searchResults = require('../../middleware/search-results-static');
 const isJson = require('../../util/isJson');
+const publishConcept = require('../../middleware/publish-concept');
+const c = require('config');
 
 const router = express.Router({ mergeParams: true });
 const userhasModeratorRights = (user) => {
@@ -40,10 +42,8 @@ router
     /**
      * Old sort for backward compatibility
      */
-    let sort = (req.query.sort || '').replace(/[^a-z_]+/i, '') || (req.cookies['idea_sort'] && req.cookies['idea_sort'].replace(/[^a-z_]+/i, ''));
+    let sort = (req.query.sort || '').replace(/[^a-z_]+/i, '');
     if (sort) {
-      //res.cookie('idea_sort', sort, { expires: 0 });
-
       if (sort == 'votes_desc' || sort == 'votes_asc') {
         if (req.canIncludeVoteCount) req.scope.push('includeVoteCount'); // het werkt niet als je dat in de sort scope functie doet...
       }
@@ -83,10 +83,6 @@ router
       let tags = req.query.tags;
       req.scope.push({ method: ['selectTags', tags] });
       req.scope.push('includeTags');
-    }
-
-    if (req.query.includePosterImage) {
-      req.scope.push('includePosterImage');
     }
 
     if (req.query.includeUser) {
@@ -157,6 +153,7 @@ router.route('/')
   // create idea
   // -----------
   .post(auth.can('Idea', 'create'))
+  .post(publishConcept)
   .post(function(req, res, next) {
     if (!req.site) return next(createError(401, 'Site niet gevonden'));
     return next();
@@ -220,14 +217,19 @@ router.route('/')
       });
 
   })
-  .post(function(req, res, next) {
+  .post(async function(req, res, next) {
 
     // tags
-    if (!req.body.tags) return next();
+    let tags = req.body.tags
+    if (!tags) return next();
 
-    let ideaInstance = req.results;
+    const ideaInstance = req.results;
+    const siteId = req.params.siteId;
+
+    let tagIds = Array.from(await getOrCreateTagIds(siteId, tags, req.user));
+
     ideaInstance
-      .setTags(req.body.tags)
+      .setTags(tagIds)
       .then(tags => {
         // refetch. now with tags
         let scope = [...req.scope, 'includeTags'];
@@ -248,7 +250,11 @@ router.route('/')
   })
   .post(function(req, res, next) {
     res.json(req.results);
-    if (!req.query.nomail) mail.sendThankYouMail(req.results, 'ideas', req.site, req.user); // todo: optional met config?
+    if (!req.query.nomail && req.body['publishDate']) {
+      mail.sendThankYouMail(req.results, 'ideas', req.site, req.user); 
+    } else if(!req.query.nomail && !req.body['publishDate']) {
+      mail.sendConceptEmail(req.results, 'ideas', req.site, req.user);
+    }
   });
 
 // one idea
@@ -292,12 +298,27 @@ router.route('/:ideaId(\\d+)')
   // update idea
   // -----------
   .put(auth.useReqUser)
-  .put(function(req, res, next) {
-    req.tags = req.body.tags;
+  .put(publishConcept)
+  .put(function(req, res, next) {    
+    if (!(req.site.config && req.site.config.ideas && req.site.config.ideas.canAddNewIdeas)) {
+      if(!req.results.dataValues.publishDate) {
+          return next(createError(401, 'Aanpassen en inzenden van concept plannen is gesloten'));
+      }
+    }
     return next();
   })
   .put(function(req, res, next) {
-
+    req.tags = req.body.tags;
+    next();
+  })
+  .put(function(req, res, next) {
+    const currentIdea = req.results.dataValues;
+    const wasConcept = currentIdea && !currentIdea.publishDate;
+    const willNowBePublished = req.body['publishDate'];   
+    req.changedToPublished = wasConcept && willNowBePublished;
+    next();
+  })
+  .put(function(req, res, next) {
     var idea = req.results;
 
     if (!(idea && idea.can && idea.can('update'))) return next(new Error('You cannot update this Idea'));
@@ -338,17 +359,19 @@ router.route('/:ideaId(\\d+)')
       })
       .catch(next);
   })
-  .put(function(req, res, next) {
+  .put(async function(req, res, next) {
 
     // tags
-    if (!req.tags) return next();
+    let tags = req.body.tags
+    if (!tags) return next();
 
-    let tagIds = [];
-    let responseData;
-    let ideaInstance = req.results;
+    const ideaInstance = req.results;
+    const siteId = req.params.siteId;
+
+    let tagIds = Array.from(await getOrCreateTagIds(siteId, tags, req.user));
 
     ideaInstance
-      .setTags(req.tags)
+      .setTags(tagIds)
       .then(result => {
         // refetch. now with tags
         let scope = [...req.scope, 'includeTags'];
@@ -370,7 +393,12 @@ router.route('/:ideaId(\\d+)')
           })
           .catch(next);
       });
-
+  })
+  .put(function(req, res, next) {
+    if(req.changedToPublished) {
+      mail.sendConceptEmail(req.results, 'ideas', req.site, req.user);
+    }
+    next();
   })
   .put(function(req, res, next) {
     res.json(req.results);
@@ -390,5 +418,57 @@ router.route('/:ideaId(\\d+)')
       })
       .catch(next);
   });
+
+// when adding or updating ideas parse the tags
+async function getOrCreateTagIds(siteId, tags, user) {
+
+  let result = [];
+  let tagsOfSite = await db.Tag.findAll({where: { siteId }});
+
+  for (let i = 0; i < tags.length; i++) {
+
+    let tag = tags[i];
+    
+    // tags may be sent as [id1, id2] or [name1, name2] or [ { id: id1, name: name1 }, { id: id2, name: name2 } ]
+    let tagId, tagName;
+    if (typeof tag === 'object') {
+      tagId = tag.id
+      tagName = tag.name;
+    } else if (tag == parseInt(tag)) {
+      tagId = tag;
+    } else {
+      tagName = tag;
+    }
+
+    // find in site tags by id or name
+    let found = tagsOfSite.find( tag => tag.id == tagId );
+    if (!found) found = tagsOfSite.find( tag => tag.name == tagName );
+    if (found) {
+      result.push(found);
+    } else {
+      
+      // or try to find this tag in another site
+      if (tagId) {
+        let tagOnOtherSite = await db.Tag.findOne({where: { id: tagId }});
+        if (tagOnOtherSite) tagName = tagOnOtherSite.name; // use name to create a new tag
+      }
+
+      // create a new tag
+      if (tagName && userhasModeratorRights(user)) { // else ignore
+        let newTag = await db.Tag.create({
+          siteId, 
+          name: tagName, 
+          extraData: {}
+        });
+        result.push(newTag);
+      }
+
+    }
+    
+  };
+
+  return result;
+
+}
 
 module.exports = router;

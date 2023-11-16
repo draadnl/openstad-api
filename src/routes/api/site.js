@@ -2,6 +2,7 @@ const express 				= require('express');
 const config 					= require('config');
 const fetch           = require('node-fetch');
 const merge           = require('merge');
+const Sequelize       = require('sequelize');
 const db      				= require('../../db');
 const auth 						= require('../../middleware/sequelize-authorization-middleware');
 const pagination 			= require('../../middleware/pagination');
@@ -9,6 +10,7 @@ const searchResults 	= require('../../middleware/search-results-user');
 const oauthClients 		= require('../../middleware/oauth-clients');
 const checkHostStatus = require('../../services/checkHostStatus')
 const OAuthApi        = require('../../services/oauth-api');
+const sitesWithIssues = require('../../services/sites-with-issues');
 
 let router = express.Router({mergeParams: true});
 
@@ -39,6 +41,7 @@ router.route('/')
 	.get(auth.can('Site', 'list'))
 	.get(pagination.init)
 	.get(function(req, res, next) {
+
 		const scope = ['withArea'];
 
 		db.Site
@@ -83,6 +86,55 @@ router.route('/')
 	.post(refreshSiteConfigMw)
 	.post(function(req, res, next) {
     return res.json(req.results);
+  })
+
+// list sites with issues
+router.route('/issues')
+// -------------------------------
+	.get(auth.can('Site', 'list'))
+	.get(pagination.init)
+	.get(function(req, res, next) {
+    req.results = [];
+    req.dbQuery.count = 0;
+    return next();
+  })
+	.get(function(req, res, next) {
+
+    // sites that should be ended but are not
+    sitesWithIssues.shouldHaveEndedButAreNot({ offset: req.dbQuery.offset, limit: req.dbQuery.limit })
+			.then( result => {
+        req.results = req.results.concat( result.rows );
+        req.dbQuery.count += result.count;
+        return next();
+			})
+			.catch(next);
+
+	})
+	.get(function(req, res, next) {
+
+    // sites that have ended but are not anonymized
+    sitesWithIssues.endedButNotAnonymized({ offset: req.dbQuery.offset, limit: req.dbQuery.limit })
+			.then( result => {
+        req.results = req.results.concat( result.rows );
+        req.dbQuery.count += result.count;
+        return next();
+			})
+			.catch(next);
+
+	})
+	.get(searchResults)
+	.get(auth.useReqUser)
+	.get(pagination.paginateResults)
+	.get(function(req, res, next) {
+    let records = req.results.records || req.results
+		records.forEach((record, i) => {
+      let site = record.toJSON()
+			if (!( req.user && req.user.role && req.user.role == 'admin' )) {
+        site.config = undefined;
+			}
+      records[i] = site;
+    });
+		res.json(req.results);
   })
 
 // one site routes: get site
@@ -220,7 +272,7 @@ router.route('/:siteIdOrDomain') //(\\d+)
 // anonymize all users
 // -------------------
 router.route('/:siteId(\\d+)/:willOrDo(will|do)-anonymize-all-users')
-	.put(auth.can('Site', 'anonimizeAllUsers'))
+	.put(auth.can('Site', 'anonymizeAllUsers'))
 	.put(function(req, res, next) {
     // the site
 		let where = { id: parseInt(req.params.siteId) };
@@ -230,40 +282,25 @@ router.route('/:siteId(\\d+)/:willOrDo(will|do)-anonymize-all-users')
 				if ( !found ) throw new Error('Site not found');
 				req.results = found;
 				req.site = req.results; // middleware expects this to exist
-        next();
-				return null;
+        		next();
 			})
 			.catch(next);
 	})
   .put(async function (req, res, next) {
     try {
+		const result = await req.site.willAnonymizeAllUsers();
+		req.results = result;
       if (req.params.willOrDo == 'do') {
-        req.results = await req.site.doAnonymizeAllUsers();
-      } else {
-        req.results = await req.site.willAnonymizeAllUsers();
-      }
+		result.message = 'Ok';
+
+		req.site.doAnonymizeAllUsers(
+			[...result.users], 
+			[...result.externalUserIds],
+			req.query.useOauth
+
+		);
+      } 
       next();
-			return null;
-    } catch (err) {
-      return next(err);
-    }
-  })
-  .put(async function (req, res, next) {
-    try {
-      if (req.results.externalUserIds.length == 0) return next();
-      for (let externalUserId of req.results.externalUserIds) {
-        let users = await db.User.findAll({ where: { externalUserId } });
-        if (users.length == 0) {
-          // no api users left for this oauth user, so remove the oauth user
-          let which = req.query.useOauth || 'default';
-          let siteConfig = req.site && merge({}, req.site.config, { id: req.site.id });
-          if (req.params.willOrDo == 'do') {
-            let result = await OAuthApi.deleteUser({ siteConfig, which, userData: { id: externalUserId }})
-          }
-        }
-      }
-      next();
-			return null;
     } catch (err) {
       return next(err);
     }

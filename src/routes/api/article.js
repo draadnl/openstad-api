@@ -21,9 +21,8 @@ router
 
 		req.scope = ['api', 'includeSite'];
 
-		var sort = (req.query.sort || '').replace(/[^a-z_]+/i, '') || (req.cookies['article_sort'] && req.cookies['article_sort'].replace(/[^a-z_]+/i, ''));
+		var sort = (req.query.sort || '').replace(/[^a-z_]+/i, '');
 		if (sort) {
-			res.cookie('article_sort', sort, { expires: 0 });
 			req.scope.push({ method: ['sort', req.query.sort]});
 		}
 
@@ -33,10 +32,6 @@ router
 
 		if (req.query.running) {
 			req.scope.push('selectRunning');
-		}
-
-		if (req.query.includePosterImage) {
-			req.scope.push('includePosterImage');
 		}
 
 		if (req.query.includeUser) {
@@ -262,9 +257,12 @@ router.route('/:articleId(\\d+)')
 
 // delete article
 // ---------
-	.delete(auth.can('Article', 'delete'))
+	.delete(auth.useReqUser)
 	.delete(function(req, res, next) {
-		req.results
+		const article = req.results;
+		if (!(article && article.can && article.can('delete'))) return next(new Error('You cannot delete this article'));
+
+		article
 			.destroy()
 			.then(() => {
 				res.json({ "article": "deleted" });
