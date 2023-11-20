@@ -28,6 +28,7 @@ module.exports  = {
 			this.app.use(function(req, res, next) {
 				console.log ('user IP: ', req.ip);
 				console.log ('forwarded for header', req.headers['x-forwarded-for']);
+				console.log ('trust proxy', process.env.TRUST_PROXY || 'true');
 				next();
 			});
 
