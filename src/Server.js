@@ -21,13 +21,14 @@ module.exports  = {
 
       this.app = express();
       this.app.disable('x-powered-by');
-      this.app.set('trust proxy', 'loopback, linklocal, uniquelocal');
+      this.app.set('trust proxy', process.env.TRUST_PROXY || 'true');
       this.app.set('view engine', 'njk');
       this.app.set('env', process.env.NODE_APP_INSTANCE || 'development');
 			
 			this.app.use(function(req, res, next) {
 				console.log ('user IP: ', req.ip);
 				console.log ('forwarded for header', req.headers['x-forwarded-for']);
+				next();
 			});
 
       if (process.env.REQUEST_LOGGING === 'ON') {
