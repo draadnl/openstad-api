@@ -20,6 +20,14 @@ module.exports = function( db, sequelize, DataTypes ) {
 			}
 		},
 
+		type: {
+			type         : DataTypes.STRING,
+			allowNull    : true,
+			set          : function( text ) {
+				this.setDataValue('type', text?sanitize.safeTags(text.trim()):null);
+			}
+		},
+
 		extraData: getExtraDataConfig(DataTypes.JSON, 'tags')
 	}, {
 
@@ -63,9 +71,9 @@ module.exports = function( db, sequelize, DataTypes ) {
 	Tag.auth = Tag.prototype.auth = {
     listableBy: 'all',
     viewableBy: 'all',
-    createableBy: 'admin',
-    updateableBy: 'admin',
-    deleteableBy: 'admin',
+    createableBy: 'moderator',
+    updateableBy: 'moderator',
+    deleteableBy: 'moderator',
   }
 
 	return Tag;

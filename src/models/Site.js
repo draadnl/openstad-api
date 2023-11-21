@@ -1,6 +1,7 @@
 const Sequelize = require('sequelize');
 const merge = require('merge');
 const moment = require('moment');
+const apiConfig = require('config');
 const OAuthApi = require('../services/oauth-api');
 const userHasRole = require('../lib/sequelize-authorization/lib/hasRole');
 
@@ -41,7 +42,8 @@ module.exports = function (db, sequelize, DataTypes) {
         this.setDataValue('config', this.parseConfig(value));
       },
       auth: {
-        viewableBy: 'admin',
+        viewableBy: 'editor',
+        updateableBy: 'editor',
       },
     },
 
@@ -78,9 +80,9 @@ module.exports = function (db, sequelize, DataTypes) {
           let current = await db.Site.findOne({ where: { id: instance.id } });
 
           // on update of projectHasEnded also update isActive of all the parts
-          if (current && typeof instance.config.projectHasEnded != 'undefined' && current.config.projectHasEnded !== instance.config.projectHasEnded) {
+          if (current && typeof instance.config.project.projectHasEnded != 'undefined' && current.config.project.projectHasEnded !== instance.config.project.projectHasEnded) {
             let config = merge.recursive(true, instance.config);
-            if (instance.config.projectHasEnded) {
+            if (instance.config.project.projectHasEnded) {
               config.votes.isActive = false;
               config.ideas.canAddNewIdeas = false;
               config.articles.canAddNewArticles = false;
@@ -116,8 +118,19 @@ module.exports = function (db, sequelize, DataTypes) {
         return beforeUpdateOrCreate(instance, options);
       },
 
-      beforeDestroy: function (instance, options) {
-        if (!(instance && instance.config && instance.config.projectHasEnded)) throw Error('Cannot delete an active site - first set the project-has-ended parameter');
+      beforeDestroy: async function (instance, options) {
+        // project has ended
+        if (!(instance && instance.config && instance.config.project.projectHasEnded)) throw Error('Cannot delete an active site - first set the project-has-ended parameter');
+        // are all users anonymized
+        let found = await db.User
+            .findAll({
+              where: {
+                siteId: instance.id,
+                role: 'member',
+              }
+            })
+
+        if (found.length > 0) throw Error('Cannot delete an active site - first anonymize all users');
         return 
       },
 
@@ -157,6 +170,7 @@ module.exports = function (db, sequelize, DataTypes) {
   }
 
   Site.associate = function (models) {
+    this.hasMany(models.User);
     this.hasMany(models.Idea);
     this.belongsTo(models.Area);
   }
@@ -166,18 +180,72 @@ module.exports = function (db, sequelize, DataTypes) {
     // todo: formaat gelijktrekken met sequelize defs
     // todo: je zou ook opties kunnen hebben die wel een default hebbe maar niet editable zijn? apiUrl bijv. Of misschien is die afgeleid
     return {
+
       allowedDomains: {
         type: 'arrayOfStrings',
         default: [
           'openstad-api.amsterdam.nl'
         ]
       },
-      allowedDomains: {
-        type: 'arrayOfStrings',
-        default: [
-          'openstad-api.amsterdam.nl'
-        ]
+
+      project: {
+        type: 'object',
+        subset: {
+          endDate: {
+            type: 'string', // todo: add date type
+            default: null,
+          },
+          endDateNotificationSent: {
+            type: 'boolean',
+            default: false,
+          },
+          projectHasEnded: {
+            type: 'boolean',
+            default: false,
+          },
+        },
       },
+
+      anonymize: {
+        type: 'object',
+        subset: {
+          anonymizeUsersXDaysAfterEndDate: {
+            type: 'int',
+            default: 60,
+          },
+          warnUsersAfterXDaysOfInactivity: {
+            type: 'int',
+            default: 770,
+          },
+          anonymizeUsersAfterXDaysOfInactivity: {
+            type: 'int',
+            default: 860,
+          },
+          inactiveWarningEmail: {
+            type: 'object',
+            subset: {
+              subject: {
+                type: 'string',
+                default: 'We gaan je account verwijderen',
+              },
+              template: {
+                type: 'string',
+                default: `Beste {{DISPLAYNAME}},<br/>\
+<br/>\
+Je bent al een tijd niet actief geweest op de website <a href="{{URL}}">{{URL}}</a>. We willen niet onnodig je gegevens blijven bewaren, en gaan die daarom verwijderen.<br/>\
+<br/>\
+Dat betekent dat een eventuele bijdrage die je hebt geleverd op de website, bijvoorbeeld inzendingen en/of reacties, geanonimiseerd worden.<br/>\
+<br/>\
+Wil je dit liever niet? Dan hoef je alleen een keer in te loggen op de website om je account actief te houden. Doe dit wel voor {{ANONYMIZEDATE}}, want anders gaan we op die dag je gegevens verwijderen.<br/>\
+<br/>\
+<br/>\
+<em>Dit is een geautomatiseerde email.</em>`,
+              },
+            },
+          },
+        },
+      },
+
       basicAuth: {
         type: 'object',
         subset: {
@@ -195,6 +263,7 @@ module.exports = function (db, sequelize, DataTypes) {
           },
         }
       },
+
       cms: {
         type: 'object',
         subset: {
@@ -237,19 +306,25 @@ module.exports = function (db, sequelize, DataTypes) {
           }
         }
       },
+
       notifications: {
         type: 'object',
         subset: {
-          from: {
+          fromAddress: {
             type: 'string', // todo: add type email/list of emails
             default: 'EMAIL@NOT.DEFINED',
           },
-          to: {
+          projectmanagerAddress: {
             type: 'string', // todo: add type email/list of emails
             default: 'EMAIL@NOT.DEFINED',
           },
-        }
+          siteadminAddress: {
+            type: 'string', // todo: add type email/list of emails
+            default: apiConfig.notifications.admin.emailAddress,
+          },
+        },
       },
+
       email: {
         type: 'object',
         subset: {
@@ -359,6 +434,42 @@ module.exports = function (db, sequelize, DataTypes) {
               default: undefined,
             },
           },
+          conceptEmail: {
+            from: {
+              type: 'string', // todo: add type email/list of emails
+              default: 'EMAIL@NOT.DEFINED',
+            },
+            subject: {
+              type: 'string',
+              default: undefined,
+            },
+            inzendingPath: {
+              type: 'string',
+              default: "/PATH/TO/PLAN/[[ideaId]]",
+            },
+            template: {
+              type: 'string',
+              default: undefined,
+            },
+          },
+          conceptToPublishedEmail: {
+              from: {
+                type: 'string', // todo: add type email/list of emails
+                default: 'EMAIL@NOT.DEFINED',
+              },
+              subject: {
+                type: 'string',
+                default: undefined,
+              },
+              inzendingPath: {
+                type: 'string',
+                default: "/PATH/TO/PLAN/[[ideaId]]",
+              },
+              template: {
+                type: 'string',
+                default: undefined,
+              },
+            },
           extraDataMustBeDefined: {
             type: 'boolean',
             default: false,
@@ -706,11 +817,6 @@ module.exports = function (db, sequelize, DataTypes) {
         default: []
       },
 
-      projectHasEnded: {
-        type: 'boolean',
-        default: false,
-      },
-
     }
   }
 
@@ -741,6 +847,33 @@ module.exports = function (db, sequelize, DataTypes) {
         if (key == 'oauth' && value[key] && !value[key].default && (value[key]['auth-server-url'] || value[key]['auth-client-id'] || value[key]['auth-client-secret'] || value[key]['auth-server-login-path'] || value[key]['auth-server-exchange-code-path'] || value[key]['auth-server-get-user-path'] || value[key]['auth-server-logout-path'] || value[key]['after-login-redirect-uri'])) {
           // dit is een oude
           value[key] = {default: value[key]};
+        }
+
+        // backwards compatibility op notifications settings
+        if (key == 'notifications' && value[key]) {
+          if (value[key].from && ( !(value[key].fromAddress) || value[key].fromAddress == options[key].subset.fromAddress.default )) {
+            value[key].fromAddress = value[key].from;
+            value[key].from = undefined;
+          }
+          if (value[key].to) {
+            if ( !value[key].projectmanagerAddress || value[key].projectmanagerAddress == options[key].subset.projectmanagerAddress.default ) {
+              value[key].projectmanagerAddress = value[key].to || apiConfig.notifications.admin.emailAddress || options[key].subset.projectmanagerAddress.default;
+            }
+            if ( !value[key].siteadminAddress || value[key].siteadminAddress == options[key].subset.default ) {
+              value[key].siteadminAddress = apiConfig.notifications.admin.emailAddress || value[key].projectmanagerAddress;
+            }
+            value[key].to = undefined;
+          }
+        }
+
+        // backwards compatibility projectHasEnded
+        if (key == 'project') {
+          value[key] = value[key] || {};
+          if (typeof value[key].projectHasEnded == 'undefined' && typeof value.projectHasEnded != 'undefined') {
+            // dit is een oude
+            value[key].projectHasEnded = value.projectHasEnded;
+            delete value.projectHasEnded
+          }
         }
 
         // TODO: 'arrayOfObjects' met een subset
@@ -818,20 +951,20 @@ module.exports = function (db, sequelize, DataTypes) {
           newValue[key] = value[key];
         }
       });
+
       return newValue;
+
     }
 
   }
 
   Site.prototype.willAnonymizeAllUsers = async function () {
-
     let self = this;
     let result = {};
 
     try {
-
       if (!self.id) throw Error('Site not found');
-      if (!self.config.projectHasEnded) throw Error('Cannot anonymize users on an active site - first set the project-has-ended parameter');
+      if (!self.config.project.projectHasEnded) throw Error('Cannot anonymize users on an active site - first set the project-has-ended parameter');
 
       let users = await db.User.findAll({ where: { siteId: self.id, externalUserId: { [Sequelize.Op.ne]: null } } });
 
@@ -841,43 +974,46 @@ module.exports = function (db, sequelize, DataTypes) {
 
       // extract externalUserIds
       result.externalUserIds = result.users.filter( user => user.externalUserId ).map( user => user.externalUserId );
-
     } catch (err) {
       console.log(err);
       throw err;
     }
 
     return result;
-    
   }
 
-  Site.prototype.doAnonymizeAllUsers = async function () {
-
+  Site.prototype.doAnonymizeAllUsers = async function (usersToAnonymize, externalUserIds, useOauth='default') {
     // anonymize all users for this site
     let self = this;
-    let result;
-
+    const amountOfUsersPerSecond = 50;
     try {
-
-      result = await self.willAnonymizeAllUsers();
-
-      let users = [ ...result.users ]
-
-      // anonymize users
-      for (const user of users) {
-        user.site = self;
-        let res = await user.doAnonymize();
-        user.site = null;
+      // Anonymize users
+      for (const user of usersToAnonymize) {
+        await new Promise((resolve, reject) => {
+          setTimeout(async function() {
+            user.site = self;
+            let res = await user.doAnonymize();
+            user.site = null;
+          }, 1000 / amountOfUsersPerSecond)
+        })       
+        .then(result => resolve() )
+          .catch(function (err) {
+            throw err;
+          });
       }
 
+      for (let externalUserId of externalUserIds) {
+        let users = await db.User.findAll({ where: { externalUserId } });
+        if (users.length == 0) {
+          // no api users left for this oauth user, so remove the oauth user
+          let siteConfig = self && merge({}, self.config, { id: self.id });
+            await OAuthApi.deleteUser({ siteConfig, useOauth, userData: { id: externalUserId }})
+        }
+      }
     } catch (err) {
       console.log(err);
       throw err;
     }
-
-    result.message = 'Ok';
-    return result;
-
   }
 
   Site.prototype.isVoteActive = function () {
@@ -890,12 +1026,12 @@ module.exports = function (db, sequelize, DataTypes) {
   }
 
   Site.auth = Site.prototype.auth = {
-    listableBy: 'all',
+    listableBy: 'moderator',
     viewableBy: 'all',
     createableBy: 'admin',
-    updateableBy: 'admin',
+    updateableBy: 'editor',
     deleteableBy: 'admin',
-    canAnonimizeAllUsers : function(user, self) {
+    canAnonymizeAllUsers : function(user, self) {
       self = self || this;
       if (!user) user = self.auth && self.auth.user;
       if (!user || !user.role) user = { role: 'all' };

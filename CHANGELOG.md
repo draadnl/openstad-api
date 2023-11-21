@@ -3,11 +3,26 @@
 ## UNRELEASED
 * Change mongoDB S3 backup to read the database dump in chunks and upload it to the S3 bucket using a MultiPart upload setup.
 * Allow s3 backups to be disabled from the cronjobs, but instead be run through a different entrypoint (backup.js) to allow kubernetes cronjobs to be used.
+* Add input, textarea and multiple-choice question types to the choices guide
+
+## 1.0.0
+* Anonymize site users 
+* Save idea as concept
+* Bugfix: no-sentiment in arguments-block
+* Bugfix: edit idea after first like or argument
+* Add env MYSQL_CA_CERT for MySQL SSL connection
+* Update/cleanup access rights for moderators and editors
+* Bugfix: add constraint to users table, to prevent double users
+* Remove all remaining code related to sessions; the API is stateless
+* Remove old image code
+* Bugfix: users in vote export
+* Bugfix: site.config.ideas.automaticallyUpdateStatus
+* Upgrade to node 16
+* Add virtual end date to idea
 
 ## v0.40.0
 Update version number
-
-## v0.21.0
+* Remove sessions and cookies - the API is stateless
 * Update Action cron to once every minute
 * Add linter/prettier
 * Unknown fixed-auth-token is no longer an error but is now a not-logged-in
@@ -15,7 +30,6 @@ Update version number
 * New template distribution system
 * Do not wait for cms when updating site config
 * Move docker builds from travis to github actions
-
 ## v0.20.0 (2021-12-20)
 * Fix responding to not existing routes with to much information
 * Make submissions listable & viewable, and allow them to be filtered by formId

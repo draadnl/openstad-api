@@ -15,7 +15,8 @@ let defaultConfig = {
 
   database   : {
     "dialect": "mysql",
-    "multipleStatements": true
+    "multipleStatements": true,
+	"maxPoolSize": 5
   },
 
 	"express": {
@@ -30,8 +31,6 @@ let defaultConfig = {
 		},
 		"middleware": [
 			"./middleware/log",
-			"./routes/cookies",
-			"./routes/dev",
 			{ "route": "/api", "router": "./routes/api" },
 			{ "route": "/oauth", "router": "./routes/oauth" },
       { "route": "/stats", "router": "./routes/stats" },
@@ -65,7 +64,23 @@ let defaultConfig = {
 			// Special high-frequency email notifications for site administrators.
 			// Should probably not be a personal email account.
 			"emailAddress": null
-		}
+		},
+    "sendEndDateNotifications": {
+      "XDaysBefore": 7,
+      "subject": "Sluitingsdatum website nadert",
+      "template": `De website <a href="{{URL}}">{{URL}}</a> nadert de ingestelde sluitingsdatum. De sluitingsdatum is ingesteld op <strong>{{ENDDATE}}</strong>.<br/>\
+<br/>\
+<strong>Klopt dit nog? Het is belangrijk dat de sluitingsdatum goed is ingesteld.</strong> Daarmee wordt gezorgd dat gebruikers vanaf dat moment hun account kunnen verwijderen, zonder dat stemmen of likes ongeldig gemaakt worden. De sluitingsdatum wordt ook als referentie gebruikt om op een later moment alle gebruikersgegevens te anonimiseren.<br/>\
+<br/>\
+De webmaster zorgt ervoor dat de website gesloten wordt, handmatig of automatisch. Neem contact op om af te spreken wanneer dit precies moet gebeuren, als je dat nog niet gedaan hebt: <a href="mailto:{{WEBMASTER_EMAIL}}">{{WEBMASTER_EMAIL}}</a>.<br/>\
+<br/>\
+Als de webmaster de website gesloten heeft is deze in principe nog wel te bezoeken, maar afhankelijk van het project kunnen er geen nieuwe plannen ingediend worden, geen reacties meer worden geplaatst, geen nieuwe stemmen of likes uitgebracht worden, en kunnen er geen nieuwe gebruikers zich aanmelden.<br/>\
+<br/>\
+<br/>\
+<br/>\
+<em>Dit is een geautomatiseerde email.</em><br/>\
+`
+    },
 	},
 
 	"authorization": {
@@ -88,9 +103,9 @@ let defaultConfig = {
 		// When an idea is closed, this threshold must be met or the idea
 		// will be automatically denied.
 		"minimumYesVotes": 100,
-		// Threshold in days after which votes are anonimized (IP removed).
-		// Votes that are earmarked as fraudulous are never anonimized.
-		"anonimizeThreshold": 180,
+		// Threshold in days after which votes are anonymized (IP removed).
+		// Votes that are earmarked as fraudulous are never anonymized.
+		"anonymizeThreshold": 180,
 		// Minimum number of votes before it influences the date sorting of
 		// and idea's arguments.
 
@@ -278,20 +293,6 @@ let defaultConfig = {
 			// all relevant roles for this application.
 			"roles": "default"
 		},
-		"sessions": {
-			"maxAge"       : 15552000000, // six months
-			"cookieName"   : "amsterdam.sid",
-			"onlySecure"   : true,
-			"secret"       : "bsp713oThgtWinJ5yoy5L68qVniW1qAM",
-			// Default cookie is browser-session maxAge. This TTL is for logged in session
-			// cookies only.
-			"cookieTTL"    : 15768000000,
-			// Login token TTL in ms (default: 48hrs). These tokens are created when a user
-			// wants to log in and enters their email address.
-			"tokenTTL"     : 172800000,
-			// Property name to store user ID in `req.session`.
-			"uidProperty"  : "userId",
-		}
 	},
 
 	"sentry": {
@@ -310,6 +311,7 @@ defaultConfig.database.user = process.env.API_DATABASE_USER || defaultConfig.dat
 defaultConfig.database.password = process.env.API_DATABASE_PASSWORD || defaultConfig.database.password;
 defaultConfig.database.database = process.env.API_DATABASE_DATABASE || defaultConfig.database.database;
 defaultConfig.database.host = process.env.API_DATABASE_HOST || defaultConfig.database.host;
+defaultConfig.database.maxPoolSize = parseInt(process.env.MAX_POOL_SIZE) || defaultConfig.database.maxPoolSize;
 defaultConfig.emailAddress = process.env.API_EMAILADDRESS || defaultConfig.emailAddress;
 defaultConfig.express.port = process.env.API_EXPRESS_PORT || defaultConfig.express_port;
 defaultConfig.mail.from = process.env.API_MAIL_FROM || defaultConfig.mail.from;
@@ -319,8 +321,7 @@ defaultConfig.mail.transport.smtp.requireSSL = process.env.API_MAIL_TRANSPORT_SM
 defaultConfig.mail.transport.smtp.auth.user = process.env.API_MAIL_TRANSPORT_SMTP_AUTH_USER || defaultConfig.mail.transport.smtp.auth.user;
 defaultConfig.mail.transport.smtp.auth.pass = process.env.API_MAIL_TRANSPORT_SMTP_AUTH_PASS || defaultConfig.mail.transport.smtp.auth.pass;
 defaultConfig.notifications.admin.emailAddress = process.env.API_NOTIFICATIONS_ADMIN_EMAILADDRESS || defaultConfig.notifications.admin.emailAddress;
-defaultConfig.security.sessions.cookieName = process.env.API_SECURITY_SESSIONS_COOKIENAME || defaultConfig.security.sessions.cookieName;
-defaultConfig.security.sessions.onlySecure = process.env.API_SECURITY_SESSIONS_ONLYSECURE || defaultConfig.security.sessions.onlySecure;
+defaultConfig.notifications.sendEndDateNotifications.XDaysBefore = process.env.API_NOTIFICATIONS_SENDENDDATENOTIFICATIONSXDAYSBEFORE || defaultConfig.notifications.sendEndDateNotifications.XDaysBefore;
 defaultConfig.authorization['jwt-secret'] = process.env.API_AUTHORIZATION_JWTSECRET || defaultConfig.authorization['jwt-secret'];
 defaultConfig.authorization['auth-server-url'] = process.env.AUTH_API_URL || defaultConfig.authorization['auth-server-url'];
 defaultConfig.authorization["auth-client-id"] = process.env.AUTH_FIRST_CLIENT_ID || defaultConfig.authorization["auth-client-id"];
