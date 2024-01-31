@@ -1,5 +1,6 @@
 const AwsS3 = require('aws-sdk');
 const fs     = require('fs');
+const moment = require("moment");
 
 const getClient = () => {
   const spacesEndpoint = new AwsS3.Endpoint(process.env.S3_ENDPOINT);
@@ -123,5 +124,37 @@ function createUploadPartParams(fileNameInS3, partNumber, uploadId, chunkAccumul
   };
 }
 
+async function deleteOlderFiles(folderNameInS3) {
+  const params = {
+    Bucket: process.env.S3_BUCKET,
+    Prefix: folderNameInS3,
+  };
+  
+  const s3Client = getClient();
 
-module.exports = {getClient, uploadFile};
+  const objects = await s3Client.listObjects(params).promise();
+
+  // Delete all files older than 7 days
+  const now = moment();
+  const filesToDelete = objects.Contents.filter((file) => {
+    const fileDate = moment(file.LastModified);
+    return now.diff(fileDate, 'days') > 7;
+  });
+  
+  console.log ('files to delete', filesToDelete, filesToDelete.join(", "));
+
+  if (filesToDelete.length > 0) {
+    const params = {
+      Bucket: process.env.S3_BUCKET,
+      Delete: {
+        Objects: filesToDelete.map((file) => {
+          return { Key: file.Key };
+        }),
+      },
+    };
+    await s3Client.deleteObjects(params).promise();
+    console.info(`Older files deleted: ${filesToDelete.length}`);
+  }
+}
+
+module.exports = {getClient, uploadFile, deleteOlderFiles};

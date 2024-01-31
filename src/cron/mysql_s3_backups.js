@@ -37,8 +37,12 @@ const backupMysqlToS3 = async () => {
 
       const created = moment().format('YYYY-MM-DD hh:mm:ss')
 
-      const key = isOnK8s ? `mysql/${namespace}/${dbName}_${created}sql` : `mysql/${dbName}_${created}sql`;
+      const folder = isOnK8s ? `${namespace}/mysql` : `mysql`;
+      
+      const key = `${folder}/${dbName}_${created}.sql`;
 
+      await s3.deleteOlderFiles(folder);
+      
       var params = {
           Bucket: process.env.S3_BUCKET,
           Key: key,

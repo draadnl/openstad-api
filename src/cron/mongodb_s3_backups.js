@@ -18,7 +18,8 @@ const backupMongoDBToS3 = async () => {
     const isOnK8s         = !!process.env.KUBERNETES_NAMESPACE;
     const namespace       = process.env.KUBERNETES_NAMESPACE;
     const created = moment().format('YYYY-MM-DD hh:mm:ss')
-    const fileNameInS3 = isOnK8s ? `mongodb/${namespace}/mongo_${created}` : `mongodb/mongo_${created}`;
+    const folder = isOnK8s ? `${namespace}/mongodb` : `mongodb`;
+    const fileNameInS3 = `${folder}/mongo_${created}`;
     const deleteTempFile = () => {
       try {
         console.log ('removing temp file', tempFile);
@@ -27,6 +28,8 @@ const backupMongoDBToS3 = async () => {
         console.error('error removing file', tempFile, e);
       }
     };
+    
+    await s3.deleteOlderFiles(folder);
     
     // Default command, does not considers username or password
     let command = `mongodump -h ${host} --port=${port} --archive=${tempFile}`;
