@@ -140,10 +140,10 @@ async function deleteOlderFiles(folderNameInS3) {
   const now = moment();
   const filesToDelete = objects.Contents.filter((file) => {
     const fileDate = moment(file.LastModified);
-    return now.diff(fileDate, 'days') > deleteAfterDays || deleteAfterDays === 0;
+    return now.diff(fileDate, 'days') > deleteAfterDays || deleteAfterDays <= 0;
   });
   
-  console.log ('files to delete', filesToDelete, filesToDelete.join(", "));
+  console.log ('files to delete', deleteAfterDays, filesToDelete, filesToDelete.join(", "));
 
   if (filesToDelete.length > 0) {
     const params = {
