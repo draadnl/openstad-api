@@ -134,11 +134,13 @@ async function deleteOlderFiles(folderNameInS3) {
 
   const objects = await s3Client.listObjects(params).promise();
 
+  const deleteAfterDays = process.env.S3_DELETE_AFTER_DAYS || 7;
+  
   // Delete all files older than 7 days
   const now = moment();
   const filesToDelete = objects.Contents.filter((file) => {
     const fileDate = moment(file.LastModified);
-    return now.diff(fileDate, 'days') > 7;
+    return now.diff(fileDate, 'days') > deleteAfterDays || deleteAfterDays === 0;
   });
   
   console.log ('files to delete', filesToDelete, filesToDelete.join(", "));

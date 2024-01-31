@@ -16,6 +16,9 @@ const backupMysqlToS3 = async () => {
   const isOnK8s = !!process.env.KUBERNETES_NAMESPACE;
   const namespace = process.env.KUBERNETES_NAMESPACE;
   
+  const folder = isOnK8s ? `${namespace}/mysql` : `mysql`;
+  await s3.deleteOlderFiles(folder);
+  
   if (dbsToBackup) {
     for (let dbName of dbsToBackup) {
       // return the dump from the function and not to a file
@@ -37,11 +40,9 @@ const backupMysqlToS3 = async () => {
 
       const created = moment().format('YYYY-MM-DD hh:mm:ss')
 
-      const folder = isOnK8s ? `${namespace}/mysql` : `mysql`;
       
       const key = `${folder}/${dbName}_${created}.sql`;
 
-      await s3.deleteOlderFiles(folder);
       
       var params = {
           Bucket: process.env.S3_BUCKET,
