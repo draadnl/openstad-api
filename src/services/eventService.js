@@ -1,5 +1,5 @@
 const jsonLogic = require('json-logic-js');
-const notificationService = require('./notificationService')
+const notificationService = require('./notificationService');
 
 /**
  * Publish an event
@@ -27,14 +27,21 @@ const publish = async (notificationRuleSet, siteId, ruleSetData) => {
     const { notification_template, notification_recipients } = ruleset;
 
     const recipients = notification_recipients.map(recipient => {
-      const user = {}
+      const user = {};
       if (recipient.emailType === 'field') {
-        // get email field from resource instance, can be dot separated (e.g. submittedData.email)
-        user.email = recipient.value.split('.').reduce((o,i)=>o[i], ruleSetData.instance)
+        // Check if ruleSetData.instance exists and has the required properties
+        if (ruleSetData.instance && ruleSetData.instance.submittedData && ruleSetData.instance.submittedData.email) {
+          user.email = ruleSetData.instance.submittedData.email;
+        } else {
+          console.error('Error: Email field not found in ruleSetData.instance', ruleSetData.instance);
+          return null;
+        }
       }
       if (recipient.emailType === 'fixed') {
-        user.email = recipient.value
+        user.email = recipient.value;
       }
+
+      console.log('Recipient:', user); // Extra log toegevoegd
 
       return user;
     });
@@ -47,15 +54,17 @@ const publish = async (notificationRuleSet, siteId, ruleSetData) => {
       subject: notification_template.subject,
       text: notification_template.text,
       template: notification_template.templateFile,
-      ...ruleSetData.instance.get()
-    }
+      ...(ruleSetData.instance && ruleSetData.instance.get()) // Check if ruleSetData.instance exists before spreading
+    };
+
+    console.log('Email data:', emailData); // Extra log toegevoegd
 
     // Todo: instead of directly notify we should use a decent queue
     recipients
-      .filter(recipient => recipient.email)
+      .filter(recipient => recipient && recipient.email) // Filter out null recipients
       .forEach(recipient => {
         console.log('Notify recipient', recipient.email);
-        notificationService.notify(emailData, recipient, siteId)
+        notificationService.notify(emailData, recipient, siteId);
       });
   });
 }
