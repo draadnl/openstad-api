@@ -2,9 +2,11 @@ var Sequelize = require('sequelize');
 var co        = require('co')
 	, config        = require('config')
 	, moment        = require('moment-timezone')
-	, pick          = require('lodash/pick');
+	, pick          = require('lodash/pick')
+	, Promise       = require('bluebird');
 
 var sanitize      = require('../util/sanitize');
+// var ImageOptim    = require('../ImageOptim');
 var notifications = require('../notifications');
 
 const merge = require('merge');
@@ -45,6 +47,41 @@ module.exports = function( db, sequelize, DataTypes ) {
 			}
 		},
 
+		endDate: {
+			type         : DataTypes.DATE,
+			allowNull    : true,
+			get          : function() {
+				var date = this.getDataValue('endDate');
+			},
+		},
+
+		endDateHumanized: {
+			type         : DataTypes.VIRTUAL,
+			get          : function() {
+				var date = this.getDataValue('endDate');
+				try {
+					if( !date )
+						return 'Onbekende datum';
+					return  moment(date).format('LLL');
+				} catch( error ) {
+					return (error.message || 'dateFilter error').toString()
+				}
+			}
+		},
+
+		duration: {
+			type         : DataTypes.VIRTUAL,
+			get          : function() {
+				if( this.getDataValue('status') != 'OPEN' ) {
+					return 0;
+				}
+
+				var now     = moment();
+				var endDate = this.getDataValue('endDate');
+				return Math.max(0, moment(endDate).diff(Date.now()));
+			}
+		},
+
 		sort: {
 			type         : DataTypes.INTEGER,
 			allowNull    : false,
@@ -71,6 +108,28 @@ module.exports = function( db, sequelize, DataTypes ) {
 			},
 			set          : function( text ) {
 				this.setDataValue('title', sanitize.title(text.trim()));
+			}
+		},
+
+		posterImageUrl: {
+			type         : DataTypes.VIRTUAL,
+			get          : function() {
+				var posterImage = this.get('posterImage');
+				var location    = this.get('location');
+
+				if ( Array.isArray(posterImage) ) {
+					posterImage = posterImage[0];
+				}
+
+				// temp, want binnenkort hebben we een goed systeem voor images
+				let imageUrl = config.url || '';
+
+				return posterImage ? `${imageUrl}/image/${posterImage.key}?thumb` :
+					location    ? 'https://maps.googleapis.com/maps/api/streetview?'+
+						'size=800x600&'+
+						`location=${location.coordinates[0]},${location.coordinates[1]}&`+
+						'heading=151.78&pitch=-0.76&key=' + config.openStadMap.googleKey
+						: null;
 			}
 		},
 
@@ -186,10 +245,14 @@ module.exports = function( db, sequelize, DataTypes ) {
 
 			afterCreate: function(instance, options) {
 				notifications.addToQueue({ type: 'article', action: 'create', siteId: instance.siteId, instanceId: instance.id });
+				// TODO: wat te doen met images
+				// article.updateImages(imageKeys, data.imageExtraData);
 			},
 
 			afterUpdate: function(instance, options) {
 				notifications.addToQueue({ type: 'article', action: 'update', siteId: instance.siteId, instanceId: instance.id });
+				// TODO: wat te doen met images
+				// article.updateImages(imageKeys, data.imageExtraData);
 			},
 
 		},
@@ -197,14 +260,20 @@ module.exports = function( db, sequelize, DataTypes ) {
 		individualHooks: true,
 
 		validate: {
+			validDeadline: function() {
+				if( this.endDate - this.startDate < 43200000 ) {
+					throw Error('An article must run at least 1 day');
+				}
+			},
 			validExtraData: function(next) {
 
 				let self = this;
 				let errors = [];
 				let value = self.extraData || {}
 				let validated = {};
-
+				console.log('ExtraData wordt gevalideerd:', self.extraData);
 				let configExtraData = self.config && self.config.articles && self.config.articles.extraData;
+				console.log('ExtraData config:', configExtraData);
 
 				function checkValue(value, config) {
 
@@ -285,6 +354,7 @@ module.exports = function( db, sequelize, DataTypes ) {
 						Object.keys(value).forEach((key) => {
 							if (typeof validated[key] == 'undefined') {
 								errors.push(`${key} is niet gedefinieerd in site.config`)
+								console.log('ExtraData validation errors:', errors);
 							}
 						});
 
@@ -292,6 +362,7 @@ module.exports = function( db, sequelize, DataTypes ) {
 						// extra data not defined in the config
 						if (!( self.config && self.config.articles && self.config.articles.extraDataMustBeDefined === false )) {
 							errors.push(`article.extraData is not configured in site.config`)
+							console.log('ExtraData validation errors:', errors);
 						}
 					}
 				}
@@ -359,6 +430,17 @@ module.exports = function( db, sequelize, DataTypes ) {
 				)
 			},
 
+			includePosterImage: {
+				include: [{
+					model      : db.Image,
+					as         : 'posterImage',
+					attributes : ['key'],
+					required   : false,
+					where      : {},
+					order      : 'sort'
+				}]
+			},
+
 			includeRanking: {
 // 				}).then((articles) => {
 // 					// add ranking
@@ -385,7 +467,7 @@ module.exports = function( db, sequelize, DataTypes ) {
 			includeUser: {
 				include: [{
 					model      : db.User,
-					attributes : ['role', 'displayName', 'nickName', 'firstName', 'lastName', 'email']
+					attributes : ['role', 'nickName', 'firstName', 'lastName', 'email']
 				}]
 			},
 
@@ -403,7 +485,7 @@ module.exports = function( db, sequelize, DataTypes ) {
 						order = [['createdAt', 'DESC']];
 						break;
 					case 'date_asc':
-						order = [['startDate', 'ASC']];
+						order = [['endDate', 'ASC']];
 						break;
 					case 'date_desc':
 					default:
@@ -415,7 +497,7 @@ module.exports = function( db, sequelize, DataTypes ) {
 								WHEN 'DENIED'   THEN 0
 								                ELSE 1
 							END DESC,
-							startDate DESC
+							endDate DESC
 						`);
 
 				}
@@ -439,7 +521,18 @@ module.exports = function( db, sequelize, DataTypes ) {
 			withUser: {
 				include: [{
 					model      : db.User,
-					attributes : ['role', 'displayName', 'nickName', 'firstName', 'lastName', 'email']
+					attributes : ['role', 'nickName', 'firstName', 'lastName', 'email']
+				}]
+			},
+			withPosterImage: {
+				include: [{
+					model      : db.Image,
+					as         : 'posterImage',
+					attributes : ['key', 'extraData'],
+					required   : false,
+					where      : {
+						sort: 0
+					}
 				}]
 			},
 		}
@@ -447,6 +540,9 @@ module.exports = function( db, sequelize, DataTypes ) {
 
 	Article.associate = function( models ) {
 		this.belongsTo(models.User);
+		this.hasMany(models.Image);
+		// this.hasOne(models.Image, {as: 'posterImage'});
+		this.hasMany(models.Image, {as: 'posterImage'});
 		this.belongsTo(models.Site);
 	}
 
@@ -461,7 +557,7 @@ module.exports = function( db, sequelize, DataTypes ) {
 				order = [['createdAt', 'DESC']];
 				break;
 			case 'date_asc':
-				order = [['startDate', 'ASC']];
+				order = [['endDate', 'ASC']];
 				break;
 			case 'date_desc':
 			default:
@@ -473,14 +569,14 @@ module.exports = function( db, sequelize, DataTypes ) {
 								WHEN 'DENIED'   THEN 0
 								                ELSE 1
 							END DESC,
-							startDate DESC
+							endDate DESC
 						`);
 		}
 
 		// Get all running articles.
 		// TODO: Articles with status CLOSED should automatically
 		//       become DENIED at a certain point.
-		let scopes = ['summary'];
+		let scopes = ['summary', 'withPosterImage'];
 		if (extraScopes)  {
 			scopes = scopes.concat(extraScopes);
 		}
@@ -567,6 +663,38 @@ module.exports = function( db, sequelize, DataTypes ) {
 		return this.update({status: status});
 	}
 
+	Article.prototype.updateImages = function( imageKeys, extraData ) {
+		var self = this;
+		if( !imageKeys || !imageKeys.length ) {
+			imageKeys = [''];
+		}
+
+		var articleId  = this.id;
+		var queries = [
+			db.Image.destroy({
+				where: {
+					articleId : articleId,
+					key    : {[Sequelize.Op.not]: imageKeys}
+				}
+			})
+		].concat(
+			imageKeys.map(function( imageKey, sort ) {
+				return db.Image.update({
+					articleId : articleId,
+					extraData : extraData || null,
+					sort   : sort
+				}, {
+					where: {key: imageKey}
+				});
+			})
+		);
+
+		return Promise.all(queries).then(function() {
+			// ImageOptim.processArticle(self.id);
+			return self;
+		});
+	}
+
 	let canMutate = function(user, self) {
 		if( !self.isOpen() ) {
 			return false;
@@ -601,7 +729,14 @@ module.exports = function( db, sequelize, DataTypes ) {
 				delete data.extraData.phone;
 			}
 
-			console.log( 'Article data!', JSON.stringify(data) );
+			if (data.extraData) {
+				console.log('ExtraData wordt gefilterd voor geautoriseerde JSON:', data.extraData);
+			} else {
+				console.log('ExtraData is leeg');
+				console.log('Data:', JSON.stringify(data));
+			}
+
+
 
 			// wordt dit nog gebruikt en zo ja mag het er uit
 			if (!data.user) data.user = {};
@@ -626,6 +761,13 @@ module.exports = function( db, sequelize, DataTypes ) {
 						return site;
 					})
 					.then( site => {
+
+						// Automatically determine `endDate`
+						if( instance.changed('startDate') ) {
+							var duration = ( instance.config && instance.config.articles && instance.config.articles.duration ) || 90;
+							var endDate  = moment(instance.startDate).add(duration, 'days').toDate();
+							instance.setDataValue('endDate', endDate);
+						}
 
 						return resolve();
 
