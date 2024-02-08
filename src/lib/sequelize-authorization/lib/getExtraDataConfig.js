@@ -20,6 +20,7 @@ module.exports = function (dataTypeJSON, siteConfigKey) {
         console.error('Fout bij het parseren van extraData:', err);
       }
 
+      console.log('ExtraData wordt geretourneerd:', value);
       return value;
     },
     set: function (value) {
@@ -108,6 +109,7 @@ module.exports = function (dataTypeJSON, siteConfigKey) {
 
             if (userHasRole(user, testRole, userId)) {
               result[key] = data[key];
+              console.log(`Data ${key} wordt geretourneerd`);
             }
           });
         }
