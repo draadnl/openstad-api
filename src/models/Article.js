@@ -733,6 +733,7 @@ module.exports = function( db, sequelize, DataTypes ) {
 			console.log('ExtraData wordt gefilterd voor geautoriseerde JSON:', data.extraData);
 	    } else {
 			console.log('ExtraData is leeg');
+			console.log('Data:', JSON.stringify(data));
 		}
 
 
