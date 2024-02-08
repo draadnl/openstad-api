@@ -89,6 +89,8 @@ router.route('/')
 					mail.sendSubmissionAdminMail(result, req.body.emailAdminTemplate || 'submission_admin', req.body.emailSubjectAdmin, req.body.submittedData, req.body.titles, req.site);
 				}
 			})
+			.catch(next);
+			
 	})
 
 	// with one existing submission
