@@ -1,34 +1,32 @@
-// TODO: verplaatsen; hoort niet in de generieke sequelize-authoriztion
-
-const userHasRole = require('./hasRole');
-var sanitize = require('../../../util/sanitize');
-
-
-module.exports = function (dataTypeJSON,  siteConfigKey) {
+module.exports = function (dataTypeJSON, siteConfigKey) {
   return {
     type: dataTypeJSON,
     allowNull: false,
     defaultValue: {},
     get: function () {
-      let value =  this.getDataValue('extraData');
+      console.log('ExtraData wordt opgehaald');
+      let value = this.getDataValue('extraData');
       try {
         if (typeof value == 'string') {
           value = JSON.parse(value);
         }
       } catch (err) {
+        console.error('Fout bij het parseren van extraData:', err);
       }
 
       return value;
     },
     set: function (value) {
+      console.log('ExtraData wordt ingesteld:', value);
       try {
         if (typeof value == 'string') {
           value = JSON.parse(value);
         }
       } catch (err) {
+        console.error('Fout bij het parseren van extraData:', err);
       }
 
-      let oldValue =  this.getDataValue('extraData') || {};
+      let oldValue = this.getDataValue('extraData') || {};
 
       // new images replace old images
       if (value && value.images) {
@@ -40,6 +38,7 @@ module.exports = function (dataTypeJSON,  siteConfigKey) {
           oldValue = JSON.parse(oldValue) || {};
         }
       } catch (err) {
+        console.error('Fout bij het parseren van oldValue:', err);
       }
 
       function fillValue(old, val) {
@@ -73,7 +72,7 @@ module.exports = function (dataTypeJSON,  siteConfigKey) {
     },
     auth: {
       viewableBy: 'all',
-      authorizeData: function(data, action, user, self, site) {
+      authorizeData: function (data, action, user, self, site) {
 
         if (!site) return; // todo: die kun je ophalen als eea. async is
         data = data || self.extraData;
@@ -88,14 +87,14 @@ module.exports = function (dataTypeJSON,  siteConfigKey) {
         if (data) {
           Object.keys(data).forEach((key) => {
 
-            let testRole = site.config && site.config[siteConfigKey] && site.config[siteConfigKey].extraData && site.config[siteConfigKey].extraData[key] && site.config[siteConfigKey].extraData[key].auth && site.config[siteConfigKey].extraData[key].auth[action+'ableBy'];
-            testRole = testRole || self.rawAttributes.extraData.auth[action+'ableBy'];
-            testRole = testRole || ( self.auth && self.auth[action+'ableBy'] ) || [];
+            let testRole = site.config && site.config[siteConfigKey] && site.config[siteConfigKey].extraData && site.config[siteConfigKey].extraData[key] && site.config[siteConfigKey].extraData[key].auth && site.config[siteConfigKey].extraData[key].auth[action + 'ableBy'];
+            testRole = testRole || self.rawAttributes.extraData.auth[action + 'ableBy'];
+            testRole = testRole || (self.auth && self.auth[action + 'ableBy']) || [];
             if (!Array.isArray(testRole)) testRole = [testRole];
 
             if (testRole.includes('detailsViewableByRole')) {
               if (self.detailsViewableByRole) {
-                testRole = [ self.detailsViewableByRole, 'owner' ];
+                testRole = [self.detailsViewableByRole, 'owner'];
               }
             }
 
