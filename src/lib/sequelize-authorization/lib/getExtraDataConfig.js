@@ -10,43 +10,35 @@ module.exports = function (dataTypeJSON,  siteConfigKey) {
     defaultValue: {},
     get: function () {
       let value =  this.getDataValue('extraData');
-      console.log('ExtraData opgehaald:', value);
       try {
         if (typeof value == 'string') {
           value = JSON.parse(value);
-          console.log('ExtraData is een string en wordt geparsed:', value);
         }
       } catch (err) {
         console.error('Fout bij het parsen van extraData:', err);
       }
 
-      console.log('Retourneren van waarde:', value);
       return value;
     },
     set: function (value) {
-      console.log('Inkomende extraData:', value);
       try {
         if (typeof value == 'string') {
           value = JSON.parse(value);
-          console.log('Inkomende extraData is een string en wordt geparsed:', value);
         }
       } catch (err) {
         console.error('Fout bij het parsen van inkomende extraData:', err);
       }
 
       let oldValue =  this.getDataValue('extraData') || {};
-      console.log('Oude extraData:', oldValue);
 
       // new images replace old images
       if (value && value.images) {
         oldValue.images = [];
-        console.log('Nieuwe afbeeldingen vervangen oude afbeeldingen.');
       }
 
       try {
         if (typeof oldValue == 'string') {
           oldValue = JSON.parse(oldValue) || {};
-          console.log('Oude extraData is een string en wordt geparsed:', oldValue);
         }
       } catch (err) {
         console.error('Fout bij het parsen van oude extraData:', err);
@@ -61,16 +53,13 @@ module.exports = function (dataTypeJSON,  siteConfigKey) {
           if (val[key] === null) {
             // send null to delete fields
             delete val[key];
-            console.log(`Veld "${key}" wordt verwijderd.`);
           } else if (typeof val[key] == 'undefined') {
             // not defined in put data; use old val
             val[key] = old[key];
-            console.log(`Veld "${key}" is niet gedefinieerd in de invoerdata; oude waarde wordt gebruikt.`);
           }
 
           if (typeof val[key] === 'string') {
             val[key] = sanitize.safeTags(val[key]);
-            console.log(`Veld "${key}" wordt veilig gemaakt.`);
           }
         });
       }
@@ -80,10 +69,8 @@ module.exports = function (dataTypeJSON,  siteConfigKey) {
       // ensure images is always an array
       if (value.images && typeof value.images === 'string') {
         value.images = [value.images];
-        console.log('Afbeeldingen worden omgezet naar een array:', value.images);
       }
 
-      console.log( 'Data set:', value );
       this.setDataValue('extraData', value);
     },
     auth: {
