@@ -1,3 +1,8 @@
+// TODO: verplaatsen; hoort niet in de generieke sequelize-authoriztion
+
+const userHasRole = require('./hasRole');
+var sanitize = require('../../../util/sanitize');
+
 module.exports = function (dataTypeJSON, siteConfigKey) {
   return {
     type: dataTypeJSON,
