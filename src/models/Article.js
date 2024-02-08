@@ -271,8 +271,9 @@ module.exports = function( db, sequelize, DataTypes ) {
 				let errors = [];
 				let value = self.extraData || {}
         let validated = {};
-
+				console.log('ExtraData wordt gevalideerd:', self.extraData);
 				let configExtraData = self.config && self.config.articles && self.config.articles.extraData;
+				console.log('ExtraData config:', configExtraData);
 
         function checkValue(value, config) {
 
@@ -353,6 +354,7 @@ module.exports = function( db, sequelize, DataTypes ) {
             Object.keys(value).forEach((key) => {
               if (typeof validated[key] == 'undefined') {
                 errors.push(`${key} is niet gedefinieerd in site.config`)
+				  console.log('ExtraData validation errors:', errors);
               }
             });
 
@@ -360,6 +362,7 @@ module.exports = function( db, sequelize, DataTypes ) {
             // extra data not defined in the config
             if (!( self.config && self.config.articles && self.config.articles.extraDataMustBeDefined === false )) {
               errors.push(`article.extraData is not configured in site.config`)
+				console.log('ExtraData validation errors:', errors);
             }
           }
         }
@@ -725,7 +728,16 @@ module.exports = function( db, sequelize, DataTypes ) {
 	    if (data.extraData && data.extraData.phone) {
 		    delete data.extraData.phone;
 	    }
-      // wordt dit nog gebruikt en zo ja mag het er uit
+
+	    if (data.extraData) {
+			console.log('ExtraData wordt gefilterd voor geautoriseerde JSON:', data.extraData);
+	    } else {
+			console.log('ExtraData is leeg');
+		}
+
+
+
+		// wordt dit nog gebruikt en zo ja mag het er uit
       if (!data.user) data.user = {};
       data.user.isAdmin = userHasRole(user, 'editor');
       // er is ook al een createDateHumanized veld; waarom is dit er dan ook nog?
