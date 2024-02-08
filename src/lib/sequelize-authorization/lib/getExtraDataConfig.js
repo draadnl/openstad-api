@@ -68,6 +68,7 @@ module.exports = function (dataTypeJSON,  siteConfigKey) {
         value.images = [value.images];
       }
 
+      console.log( 'Data set:', value );
       this.setDataValue('extraData', value);
     },
     auth: {
