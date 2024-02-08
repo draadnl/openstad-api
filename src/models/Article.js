@@ -167,7 +167,75 @@ module.exports = function( db, sequelize, DataTypes ) {
 			}
 		},
 
-		extraData: getExtraDataConfig(DataTypes.JSON,  'ideas'),
+		extraData: {
+			type         : DataTypes.JSON,
+			allowNull    : false,
+			get  	  	 : function() {
+				let value =  this.getDataValue('extraData');
+				try {
+					if (typeof value == 'string') {
+						value = JSON.parse(value);
+					}
+				} catch (err) {
+					console.error('Fout bij het parsen van extraData:', err);
+				}
+
+				return value;
+			},
+			set			: function (value) {
+				try {
+					if (typeof value == 'string') {
+						value = JSON.parse(value);
+					}
+				} catch (err) {
+					console.error('Fout bij het parsen van inkomende extraData:', err);
+				}
+
+				let oldValue =  this.getDataValue('extraData') || {};
+
+				// new images replace old images
+				if (value && value.images) {
+					oldValue.images = [];
+				}
+
+				try {
+					if (typeof oldValue == 'string') {
+						oldValue = JSON.parse(oldValue) || {};
+					}
+				} catch (err) {
+					console.error('Fout bij het parsen van oude extraData:', err);
+				}
+
+				function fillValue(old, val) {
+					old = old || {};
+					Object.keys(old).forEach((key) => {
+						if (val[key] && typeof val[key] == 'object') {
+							return fillValue(old[key], val[key]);
+						}
+						if (val[key] === null) {
+							// send null to delete fields
+							delete val[key];
+						} else if (typeof val[key] == 'undefined') {
+							// not defined in put data; use old val
+							val[key] = old[key];
+						}
+
+						if (typeof val[key] === 'string') {
+							val[key] = sanitize.safeTags(val[key]);
+						}
+					});
+				}
+
+				fillValue(oldValue, value);
+
+				// ensure images is always an array
+				if (value.images && typeof value.images === 'string') {
+					value.images = [value.images];
+				}
+
+				this.setDataValue('extraData', value);
+			},
+		},
 
 		location: {
 			type         : DataTypes.GEOMETRY('POINT'),
@@ -271,9 +339,7 @@ module.exports = function( db, sequelize, DataTypes ) {
 				let errors = [];
 				let value = self.extraData || {}
 				let validated = {};
-				console.log('ExtraData wordt gevalideerd:', self.extraData);
 				let configExtraData = self.config && self.config.articles && self.config.articles.extraData;
-				console.log('ExtraData config:', configExtraData);
 
 				function checkValue(value, config) {
 
@@ -354,7 +420,6 @@ module.exports = function( db, sequelize, DataTypes ) {
 						Object.keys(value).forEach((key) => {
 							if (typeof validated[key] == 'undefined') {
 								errors.push(`${key} is niet gedefinieerd in site.config`)
-								console.log('ExtraData validation errors:', errors);
 							}
 						});
 
@@ -362,7 +427,6 @@ module.exports = function( db, sequelize, DataTypes ) {
 						// extra data not defined in the config
 						if (!( self.config && self.config.articles && self.config.articles.extraDataMustBeDefined === false )) {
 							errors.push(`article.extraData is not configured in site.config`)
-							console.log('ExtraData validation errors:', errors);
 						}
 					}
 				}
