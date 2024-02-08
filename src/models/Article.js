@@ -1,12 +1,10 @@
 var Sequelize = require('sequelize');
 var co        = require('co')
-  , config        = require('config')
-  , moment        = require('moment-timezone')
-  , pick          = require('lodash/pick')
-  , Promise       = require('bluebird');
+	, config        = require('config')
+	, moment        = require('moment-timezone')
+	, pick          = require('lodash/pick');
 
 var sanitize      = require('../util/sanitize');
-// var ImageOptim    = require('../ImageOptim');
 var notifications = require('../notifications');
 
 const merge = require('merge');
@@ -47,41 +45,6 @@ module.exports = function( db, sequelize, DataTypes ) {
 			}
 		},
 
-		endDate: {
-			type         : DataTypes.DATE,
-			allowNull    : true,
-			get          : function() {
-				var date = this.getDataValue('endDate');
-      },
-		},
-
-		endDateHumanized: {
-			type         : DataTypes.VIRTUAL,
-			get          : function() {
-				var date = this.getDataValue('endDate');
-				try {
-					if( !date )
-						return 'Onbekende datum';
-					return  moment(date).format('LLL');
-				} catch( error ) {
-					return (error.message || 'dateFilter error').toString()
-				}
-			}
-		},
-
-		duration: {
-			type         : DataTypes.VIRTUAL,
-			get          : function() {
-				if( this.getDataValue('status') != 'OPEN' ) {
-					return 0;
-				}
-
-				var now     = moment();
-				var endDate = this.getDataValue('endDate');
-				return Math.max(0, moment(endDate).diff(Date.now()));
-			}
-		},
-
 		sort: {
 			type         : DataTypes.INTEGER,
 			allowNull    : false,
@@ -99,37 +62,15 @@ module.exports = function( db, sequelize, DataTypes ) {
 			allowNull    : false,
 			validate     : {
 				textLength(value) {
-				 	let len = sanitize.title(value.trim()).length;
+					let len = sanitize.title(value.trim()).length;
 					let titleMinLength = ( this.config && this.config.articles && this.config.articles.titleMinLength || 10 )
 					let titleMaxLength = ( this.config && this.config.articles && this.config.articles.titleMaxLength || 50 )
 					if (len < titleMinLength || len > titleMaxLength)
-					throw new Error(`Titel moet tussen ${titleMinLength} en ${titleMaxLength} tekens zijn`);
+						throw new Error(`Titel moet tussen ${titleMinLength} en ${titleMaxLength} tekens zijn`);
 				}
 			},
 			set          : function( text ) {
 				this.setDataValue('title', sanitize.title(text.trim()));
-			}
-		},
-
-		posterImageUrl: {
-			type         : DataTypes.VIRTUAL,
-			get          : function() {
-				var posterImage = this.get('posterImage');
-				var location    = this.get('location');
-
-				if ( Array.isArray(posterImage) ) {
-					posterImage = posterImage[0];
-				}
-
-				// temp, want binnenkort hebben we een goed systeem voor images
-				let imageUrl = config.url || '';
-
-				return posterImage ? `${imageUrl}/image/${posterImage.key}?thumb` :
-				       location    ? 'https://maps.googleapis.com/maps/api/streetview?'+
-				                     'size=800x600&'+
-				                     `location=${location.coordinates[0]},${location.coordinates[1]}&`+
-				                     'heading=151.78&pitch=-0.76&key=' + config.openStadMap.googleKey
-				                   : null;
 			}
 		},
 
@@ -138,11 +79,11 @@ module.exports = function( db, sequelize, DataTypes ) {
 			allowNull    : false,
 			validate     : {
 				textLength(value) {
-				 	let len = sanitize.summary(value.trim()).length;
+					let len = sanitize.summary(value.trim()).length;
 					let summaryMinLength = ( this.config && this.config.articles && this.config.articles.summaryMinLength || 20 )
 					let summaryMaxLength = ( this.config && this.config.articles && this.config.articles.summaryMaxLength || 140 )
 					if (len < summaryMinLength || len > summaryMaxLength)
-					throw new Error(`Samenvatting moet tussen ${summaryMinLength} en ${summaryMaxLength} tekens zijn`);
+						throw new Error(`Samenvatting moet tussen ${summaryMinLength} en ${summaryMaxLength} tekens zijn`);
 				}
 			},
 			set          : function( text ) {
@@ -155,11 +96,11 @@ module.exports = function( db, sequelize, DataTypes ) {
 			allowNull    : false,
 			validate     : {
 				textLength(value) {
-				 	let len = sanitize.summary(value.trim()).length;
+					let len = sanitize.summary(value.trim()).length;
 					let descriptionMinLength = ( this.config && this.config.articles && this.config.articles.descriptionMinLength || 140 )
 					let descriptionMaxLength = ( this.config && this.config.articles && this.config.articles.descriptionMaxLength || 5000 )
 					if (len < descriptionMinLength || len > descriptionMaxLength)
-					throw new Error(`Beschrijving moet tussen ${descriptionMinLength} en ${descriptionMaxLength} tekens zijn`);
+						throw new Error(`Beschrijving moet tussen ${descriptionMinLength} en ${descriptionMaxLength} tekens zijn`);
 				}
 			},
 			set          : function( text ) {
@@ -167,7 +108,7 @@ module.exports = function( db, sequelize, DataTypes ) {
 			}
 		},
 
-    extraData: getExtraDataConfig(DataTypes.JSON,  'ideas'),
+		extraData: getExtraDataConfig(DataTypes.JSON,  'ideas'),
 
 		location: {
 			type         : DataTypes.GEOMETRY('POINT'),
@@ -239,20 +180,16 @@ module.exports = function( db, sequelize, DataTypes ) {
 
 		hooks: {
 
-      // onderstaand is een workaround: bij een delete wordt wel de vvalidatehook aangeroepen, maar niet de beforeValidate hook. Dat lijkt een bug.
+			// onderstaand is een workaround: bij een delete wordt wel de vvalidatehook aangeroepen, maar niet de beforeValidate hook. Dat lijkt een bug.
 			beforeValidate: beforeValidateHook,
-      beforeDestroy: beforeValidateHook,
+			beforeDestroy: beforeValidateHook,
 
 			afterCreate: function(instance, options) {
 				notifications.addToQueue({ type: 'article', action: 'create', siteId: instance.siteId, instanceId: instance.id });
-				// TODO: wat te doen met images
-				// article.updateImages(imageKeys, data.imageExtraData);
 			},
 
 			afterUpdate: function(instance, options) {
 				notifications.addToQueue({ type: 'article', action: 'update', siteId: instance.siteId, instanceId: instance.id });
-				// TODO: wat te doen met images
-				// article.updateImages(imageKeys, data.imageExtraData);
 			},
 
 		},
@@ -260,119 +197,111 @@ module.exports = function( db, sequelize, DataTypes ) {
 		individualHooks: true,
 
 		validate: {
-			validDeadline: function() {
-				if( this.endDate - this.startDate < 43200000 ) {
-					throw Error('An article must run at least 1 day');
-				}
-			},
 			validExtraData: function(next) {
 
-        let self = this;
+				let self = this;
 				let errors = [];
 				let value = self.extraData || {}
-        let validated = {};
-				console.log('ExtraData wordt gevalideerd:', self.extraData);
+				let validated = {};
+
 				let configExtraData = self.config && self.config.articles && self.config.articles.extraData;
-				console.log('ExtraData config:', configExtraData);
 
-        function checkValue(value, config) {
+				function checkValue(value, config) {
 
-				  if (config) {
+					if (config) {
 
-            let key;
-					  Object.keys(config).forEach((key) => {
+						let key;
+						Object.keys(config).forEach((key) => {
 
-              let error = false;
+							let error = false;
 
-              // recursion on sub objects
-              if (typeof value[key] == 'object' && config[key].type == 'object') {
-                if (config[key].subset) {
-                  checkValue(value[key], config[key].subset);
-                } else {
-                  errors.push(`Configuration for ${key} is incomplete`);
-                }
-              }
+							// recursion on sub objects
+							if (typeof value[key] == 'object' && config[key].type == 'object') {
+								if (config[key].subset) {
+									checkValue(value[key], config[key].subset);
+								} else {
+									errors.push(`Configuration for ${key} is incomplete`);
+								}
+							}
 
-              // allowNull
-						  if (config[key].allowNull === false && (typeof value[key] === 'undefined' || value[key] === '')) {
-							  error = `${key} is niet ingevuld`;
-						  }
+							// allowNull
+							if (config[key].allowNull === false && (typeof value[key] === 'undefined' || value[key] === '')) {
+								error = `${key} is niet ingevuld`;
+							}
 
-              // checks op type
-              if (value[key]) {
-                switch (config[key].type) {
+							// checks op type
+							if (value[key]) {
+								switch (config[key].type) {
 
-                  case 'boolean':
-							      if ( typeof value[key] != 'boolean' ) {
-								      error = `De waarde van ${key} is geen boolean`;
-							      }
-                    break;
+									case 'boolean':
+										if ( typeof value[key] != 'boolean' ) {
+											error = `De waarde van ${key} is geen boolean`;
+										}
+										break;
 
-                  case 'int':
-							      if ( parseInt(value[key]) !== value[key] ) {
-								      error = `De waarde van ${key} is geen int`;
-							      }
-                    break;
+									case 'int':
+										if ( parseInt(value[key]) !== value[key] ) {
+											error = `De waarde van ${key} is geen int`;
+										}
+										break;
 
-                  case 'string':
-							      if ( typeof value[key] != 'string' ) {
-								      error = `De waarde van ${key} is geen string`;
-							      }
-                    break;
+									case 'string':
+										if ( typeof value[key] != 'string' ) {
+											error = `De waarde van ${key} is geen string`;
+										}
+										break;
 
-                  case 'object':
-							      if ( typeof value[key] != 'object' ) {
-								      error = `De waarde van ${key} is geen object`;
-							      }
-                    break;
+									case 'object':
+										if ( typeof value[key] != 'object' ) {
+											error = `De waarde van ${key} is geen object`;
+										}
+										break;
 
-                  case 'arrayOfStrings':
-							      if ( typeof value[key] !== 'object' || !Array.isArray(value[key]) || value[key].find(val => typeof val !== 'string') ) {
-								      error = `Ongeldige waarde voor ${key}`;
-							      }
-                    break;
+									case 'arrayOfStrings':
+										if ( typeof value[key] !== 'object' || !Array.isArray(value[key]) || value[key].find(val => typeof val !== 'string') ) {
+											error = `Ongeldige waarde voor ${key}`;
+										}
+										break;
 
-                  case 'enum':
-							      if ( config[key].values.indexOf(value[key]) == -1) {
-								      error = `Ongeldige waarde voor ${key}`;
-							      }
-                    break;
+									case 'enum':
+										if ( config[key].values.indexOf(value[key]) == -1) {
+											error = `Ongeldige waarde voor ${key}`;
+										}
+										break;
 
-                  default:
-                }
-              }
+									default:
+								}
+							}
 
-              if (error) {
-                validated[key] = false;
-                errors.push(error)
-              } else {
-                validated[key] = true;
-              }
+							if (error) {
+								validated[key] = false;
+								errors.push(error)
+							} else {
+								validated[key] = true;
+							}
 
-					  });
+						});
 
-            Object.keys(value).forEach((key) => {
-              if (typeof validated[key] == 'undefined') {
-                errors.push(`${key} is niet gedefinieerd in site.config`)
-				  console.log('ExtraData validation errors:', errors);
-              }
-            });
+						Object.keys(value).forEach((key) => {
+							if (typeof validated[key] == 'undefined') {
+								errors.push(`${key} is niet gedefinieerd in site.config`)
+							}
+						});
 
-				  } else {
-            // extra data not defined in the config
-            if (!( self.config && self.config.articles && self.config.articles.extraDataMustBeDefined === false )) {
-              errors.push(`article.extraData is not configured in site.config`)
-				console.log('ExtraData validation errors:', errors);
-            }
-          }
-        }
+					} else {
+						// extra data not defined in the config
+						if (!( self.config && self.config.articles && self.config.articles.extraDataMustBeDefined === false )) {
+							errors.push(`article.extraData is not configured in site.config`)
+						}
+					}
+				}
 
-        checkValue(value, configExtraData);
+				checkValue(value, configExtraData);
 
-        if (errors.length) {
-          console.log('Article validation error:', errors);
-          throw Error(errors.join('\n'));
-        }
+				if (errors.length) {
+					console.log('Article validation error:', errors);
+					throw Error(errors.join('\n'));
+				}
 
 				return next();
 
@@ -389,13 +318,13 @@ module.exports = function( db, sequelize, DataTypes ) {
 			// -------------------------
 
 			// defaults
-      default: {
+			default: {
 				include : [{
 					model: db.Site,
 				}]
-      },
+			},
 
-      api: {
+			api: {
 			},
 
 			mapMarkers: {
@@ -430,17 +359,6 @@ module.exports = function( db, sequelize, DataTypes ) {
 				)
 			},
 
-			includePosterImage: {
-				include: [{
-					model      : db.Image,
-					as         : 'posterImage',
-					attributes : ['key'],
-					required   : false,
-					where      : {},
-					order      : 'sort'
-				}]
-			},
-
 			includeRanking: {
 // 				}).then((articles) => {
 // 					// add ranking
@@ -467,7 +385,7 @@ module.exports = function( db, sequelize, DataTypes ) {
 			includeUser: {
 				include: [{
 					model      : db.User,
-					attributes : ['role', 'nickName', 'firstName', 'lastName', 'email']
+					attributes : ['role', 'displayName', 'nickName', 'firstName', 'lastName', 'email']
 				}]
 			},
 
@@ -485,7 +403,7 @@ module.exports = function( db, sequelize, DataTypes ) {
 						order = [['createdAt', 'DESC']];
 						break;
 					case 'date_asc':
-						order = [['endDate', 'ASC']];
+						order = [['startDate', 'ASC']];
 						break;
 					case 'date_desc':
 					default:
@@ -497,7 +415,7 @@ module.exports = function( db, sequelize, DataTypes ) {
 								WHEN 'DENIED'   THEN 0
 								                ELSE 1
 							END DESC,
-							endDate DESC
+							startDate DESC
 						`);
 
 				}
@@ -506,7 +424,7 @@ module.exports = function( db, sequelize, DataTypes ) {
 
 				return result;
 
-      },
+			},
 
 			// oude scopes
 			// -----------
@@ -521,18 +439,7 @@ module.exports = function( db, sequelize, DataTypes ) {
 			withUser: {
 				include: [{
 					model      : db.User,
-					attributes : ['role', 'nickName', 'firstName', 'lastName', 'email']
-				}]
-			},
-			withPosterImage: {
-				include: [{
-					model      : db.Image,
-					as         : 'posterImage',
-					attributes : ['key', 'extraData'],
-					required   : false,
-					where      : {
-						sort: 0
-					}
+					attributes : ['role', 'displayName', 'nickName', 'firstName', 'lastName', 'email']
 				}]
 			},
 		}
@@ -540,9 +447,6 @@ module.exports = function( db, sequelize, DataTypes ) {
 
 	Article.associate = function( models ) {
 		this.belongsTo(models.User);
-		this.hasMany(models.Image);
-		// this.hasOne(models.Image, {as: 'posterImage'});
-		this.hasMany(models.Image, {as: 'posterImage'});
 		this.belongsTo(models.Site);
 	}
 
@@ -557,7 +461,7 @@ module.exports = function( db, sequelize, DataTypes ) {
 				order = [['createdAt', 'DESC']];
 				break;
 			case 'date_asc':
-				order = [['endDate', 'ASC']];
+				order = [['startDate', 'ASC']];
 				break;
 			case 'date_desc':
 			default:
@@ -569,14 +473,14 @@ module.exports = function( db, sequelize, DataTypes ) {
 								WHEN 'DENIED'   THEN 0
 								                ELSE 1
 							END DESC,
-							endDate DESC
+							startDate DESC
 						`);
 		}
 
 		// Get all running articles.
 		// TODO: Articles with status CLOSED should automatically
 		//       become DENIED at a certain point.
-		let scopes = ['summary', 'withPosterImage'];
+		let scopes = ['summary'];
 		if (extraScopes)  {
 			scopes = scopes.concat(extraScopes);
 		}
@@ -663,94 +567,55 @@ module.exports = function( db, sequelize, DataTypes ) {
 		return this.update({status: status});
 	}
 
-	Article.prototype.updateImages = function( imageKeys, extraData ) {
-		var self = this;
-		if( !imageKeys || !imageKeys.length ) {
-			imageKeys = [''];
-		}
-
-		var articleId  = this.id;
-		var queries = [
-			db.Image.destroy({
-				where: {
-					articleId : articleId,
-					key    : {[Sequelize.Op.not]: imageKeys}
-				}
-			})
-		].concat(
-			imageKeys.map(function( imageKey, sort ) {
-				return db.Image.update({
-					articleId : articleId,
-					extraData : extraData || null,
-					sort   : sort
-				}, {
-					where: {key: imageKey}
-				});
-			})
-		);
-
-		return Promise.all(queries).then(function() {
-			// ImageOptim.processArticle(self.id);
-			return self;
-		});
-	}
-
-  let canMutate = function(user, self) {
-    if( !self.isOpen() ) {
+	let canMutate = function(user, self) {
+		if( !self.isOpen() ) {
 			return false;
 		}
-    if (userHasRole(user, 'editor', self.userId)) {
-      return true;
-    }
-    if (!userHasRole(user, 'owner', self.userId)) {
-      return false;
-    }
-    let config = self.site && self.site.config && self.site.config.articles
-    let canEditAfterFirstLikeOrArg = config && config.canEditAfterFirstLikeOrArg || false
+		if (userHasRole(user, 'editor', self.userId)) {
+			return true;
+		}
+		if (!userHasRole(user, 'owner', self.userId)) {
+			return false;
+		}
+		let config = self.site && self.site.config && self.site.config.articles
+		let canEditAfterFirstLikeOrArg = config && config.canEditAfterFirstLikeOrArg || false
 		let voteCount = self.no + self.yes;
 		let argCount  = self.argumentsFor && self.argumentsFor.length && self.argumentsAgainst && self.argumentsAgainst.length;
 		return canEditAfterFirstLikeOrArg || ( !voteCount && !argCount );
-  }
+	}
 
 	Article.auth = Article.prototype.auth = {
-    listableBy: 'all',
-    viewableBy: 'all',
-    createableBy: 'editor',
-    updateableBy: ['editor','owner'],
-    deleteableBy: ['editor','owner'],
-    canUpdate: canMutate,
-    canDelete: canMutate,
-    toAuthorizedJSON: function(user, data) {
+		listableBy: 'all',
+		viewableBy: 'all',
+		createableBy: 'editor',
+		updateableBy: ['editor','owner'],
+		deleteableBy: ['editor','owner'],
+		canUpdate: canMutate,
+		canDelete: canMutate,
+		toAuthorizedJSON: function(user, data) {
 
-      delete data.site;
-      delete data.config;
-      // dit zou nu dus gedefinieerd moeten worden op site.config, maar wegens backward compatible voor nu nog even hier:
-	    if (data.extraData && data.extraData.phone) {
-		    delete data.extraData.phone;
-	    }
+			delete data.site;
+			delete data.config;
+			// dit zou nu dus gedefinieerd moeten worden op site.config, maar wegens backward compatible voor nu nog even hier:
+			if (data.extraData && data.extraData.phone) {
+				delete data.extraData.phone;
+			}
 
-	    if (data.extraData) {
-			console.log('ExtraData wordt gefilterd voor geautoriseerde JSON:', data.extraData);
-	    } else {
-			console.log('ExtraData is leeg');
-			console.log('Data:', JSON.stringify(data));
-		}
+			console.log( 'Article data!', JSON.stringify(data) );
 
+			// wordt dit nog gebruikt en zo ja mag het er uit
+			if (!data.user) data.user = {};
+			data.user.isAdmin = userHasRole(user, 'editor');
+			// er is ook al een createDateHumanized veld; waarom is dit er dan ook nog?
+			data.createdAtText = moment(data.createdAt).format('LLL');
 
-
-		// wordt dit nog gebruikt en zo ja mag het er uit
-      if (!data.user) data.user = {};
-      data.user.isAdmin = userHasRole(user, 'editor');
-      // er is ook al een createDateHumanized veld; waarom is dit er dan ook nog?
-	    data.createdAtText = moment(data.createdAt).format('LLL');
-
-      return data;
-    },
-  }
+			return data;
+		},
+	}
 
 	return Article;
 
-  function beforeValidateHook( instance, options ) {
+	function beforeValidateHook( instance, options ) {
 
 		return new Promise((resolve, reject) => {
 
@@ -762,21 +627,14 @@ module.exports = function( db, sequelize, DataTypes ) {
 					})
 					.then( site => {
 
-						// Automatically determine `endDate`
-						if( instance.changed('startDate') ) {
-							var duration = ( instance.config && instance.config.articles && instance.config.articles.duration ) || 90;
-							var endDate  = moment(instance.startDate).add(duration, 'days').toDate();
-							instance.setDataValue('endDate', endDate);
-						}
-
 						return resolve();
 
 					}).catch(err => {
-						throw err;
-					})
+					throw err;
+				})
 			} else {
 				instance.config = config;
-        return resolve();
+				return resolve();
 			}
 
 		});
