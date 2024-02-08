@@ -13,6 +13,7 @@ module.exports = function (dataTypeJSON, siteConfigKey) {
       let value = this.getDataValue('extraData');
       try {
         if (typeof value == 'string') {
+          console.error('Waarde extraData:', value);
           value = JSON.parse(value);
         }
       } catch (err) {
@@ -73,12 +74,14 @@ module.exports = function (dataTypeJSON, siteConfigKey) {
         value.images = [value.images];
       }
 
+      console.log('ExtraData ingesteld na verwerking:', value);
+
       this.setDataValue('extraData', value);
     },
     auth: {
       viewableBy: 'all',
       authorizeData: function (data, action, user, self, site) {
-
+        console.log('Authenticatie van data wordt uitgevoerd');
         if (!site) return; // todo: die kun je ophalen als eea. async is
         data = data || self.extraData;
         data = typeof data === 'object' ? data : {};
