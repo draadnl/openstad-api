@@ -153,12 +153,12 @@
                     <td style="border: solid 3px #07838f;">
                         <div style="padding: 20px; font-size: 12px;">
                             {% for fieldKey, value in submittedData %}
-                                {% if fieldKey not "images" %}
+                                {% if fieldKey not in ["images"] %}
                                     <strong>{{ fieldKey }}</strong><br />
                                     {{ value | safe }}
                                     <br />
                                     <br />
-                                {% elseif value not "[]" %}
+                                {% elseif value not in ["[]"] %}
                                     <strong>{{ fieldKey }}</strong><br />
                                     {{ value | safe }}
                                     <br />
