@@ -136,7 +136,7 @@
         <td></td>
          <td width='560'><img
         src='https://warmrijsenhout.haarlemmermeer.nl/uploads/attachments/ckrqefksb293w0in6yaujfdio-haarlemmermeer-logo-2019-rgb-k-web.png'
-        width='92' height='116' alt='Warm Rijsenhout' align='left' style='border: 0; max-width: 100%; display:
+        width='92' height='116' alt='Gemeente Haarlemmermeer logo' align='left' style='border: 0; max-width: 100%; display:
         block; -webkit-user-select: none; outline:none; text-decoration:none; -ms-interpolation-mode: bicubic;
         margin-top: 20px;'>
     </td>
@@ -153,10 +153,17 @@
                     <td style="border: solid 3px #07838f;">
                         <div style="padding: 20px; font-size: 12px;">
                             {% for fieldKey, value in submittedData %}
-                            <strong>{{ fieldKey }}</strong><br />
-                            {{ value | safe }}
-                            <br />
-                            <br />
+                                {% if fieldKey not "images" %}
+                                    <strong>{{ fieldKey }}</strong><br />
+                                    {{ value | safe }}
+                                    <br />
+                                    <br />
+                                {% elseif value not "[]" %}
+                                    <strong>{{ fieldKey }}</strong><br />
+                                    {{ value | safe }}
+                                    <br />
+                                    <br />
+                                {% endif %}
                             {% endfor %}
                         </div>
                     </td>
