@@ -154,9 +154,9 @@
                         <div style="padding: 20px; font-size: 12px;">
                             {% for fieldKey, value in submittedData %}
                                 {% if fieldKey == "images" %}
-                                    {% if value == "[]" %}
+                                    {% if value == "[]" or value == [] %}
                                     {% else %}
-                                        <strong>{{ fieldKey }}</strong><br />
+                                        <strong>{{ fieldKey }}:</strong><br />
                                         {{ value | safe }}
                                         <br />
                                         <br />
