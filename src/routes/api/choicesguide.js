@@ -564,6 +564,8 @@ router.route('/:choicesGuideId(\\d+)/questiongroup/:questionGroupId(\\d+)/questi
       minLabel: req.body.minLabel,
       maxLabel: req.body.maxLabel,
       seqnr: req.body.seqnr,
+      validation: req.body.validation,
+      extraConfig: req.body.extraConfig,
     };
     req.question
 			.authorizeData(data, 'update', req.user)
