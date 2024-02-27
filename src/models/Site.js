@@ -963,10 +963,14 @@ Wil je dit liever niet? Dan hoef je alleen een keer in te loggen op de website o
     let result = {};
 
     try {
+      console.log('Starting willAnonymizeAllUsers function...');
       if (!self.id) throw Error('Site not found');
+      console.log('Site found:', self.id);
       if (!self.config.project.projectHasEnded) throw Error('Cannot anonymize users on an active site - first set the project-has-ended parameter');
+      console.log('Project has ended parameter is set.');
 
       let users = await db.User.findAll({ where: { siteId: self.id, externalUserId: { [Sequelize.Op.ne]: null } } });
+      console.log('Retrieved users:', users.length);
 
       // do not anonymize admins
       result.admins = users.filter( user => userHasRole(user, 'admin') );
@@ -974,8 +978,9 @@ Wil je dit liever niet? Dan hoef je alleen een keer in te loggen op de website o
 
       // extract externalUserIds
       result.externalUserIds = result.users.filter( user => user.externalUserId ).map( user => user.externalUserId );
+      console.log('External user IDs extracted:', result.externalUserIds);
     } catch (err) {
-      console.log(err);
+      console.error('Error in willAnonymizeAllUsers:', err.message);
       throw err;
     }
 
@@ -987,31 +992,38 @@ Wil je dit liever niet? Dan hoef je alleen een keer in te loggen op de website o
     let self = this;
     const amountOfUsersPerSecond = 50;
     try {
+      console.log('Starting doAnonymizeAllUsers function...');
       // Anonymize users
       for (const user of usersToAnonymize) {
         await new Promise((resolve, reject) => {
           setTimeout(async function() {
             user.site = self;
+            console.log('Anonymizing user:', user.id);
             let res = await user.doAnonymize();
             user.site = null;
-          }, 1000 / amountOfUsersPerSecond)
-        })       
-        .then(result => resolve() )
-          .catch(function (err) {
-            throw err;
-          });
+            resolve();
+          }, 1000 / amountOfUsersPerSecond);
+        })
+            .then(result => console.log('User anonymized successfully.'))
+            .catch(function (err) {
+              console.error('Error anonymizing user:', err.message);
+              throw err;
+            });
       }
 
       for (let externalUserId of externalUserIds) {
         let users = await db.User.findAll({ where: { externalUserId } });
         if (users.length == 0) {
           // no api users left for this oauth user, so remove the oauth user
+          console.log('No API users left for external user ID:', externalUserId);
           let siteConfig = self && merge({}, self.config, { id: self.id });
-            await OAuthApi.deleteUser({ siteConfig, useOauth, userData: { id: externalUserId }})
+          console.log('Deleting OAuth user...');
+          await OAuthApi.deleteUser({ siteConfig, useOauth, userData: { id: externalUserId }});
+          console.log('OAuth user deleted successfully.');
         }
       }
     } catch (err) {
-      console.log(err);
+      console.error('Error in doAnonymizeAllUsers:', err.message);
       throw err;
     }
   }
