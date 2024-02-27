@@ -971,6 +971,7 @@ Wil je dit liever niet? Dan hoef je alleen een keer in te loggen op de website o
 
       let users = await db.User.findAll({ where: { siteId: self.id, externalUserId: { [Sequelize.Op.ne]: null } } });
       console.log('Retrieved users:', users.length);
+      console.log('Retrieved users:', JSON.stringify(users));
 
       // do not anonymize admins
       result.admins = users.filter( user => userHasRole(user, 'admin') );
@@ -995,6 +996,7 @@ Wil je dit liever niet? Dan hoef je alleen een keer in te loggen op de website o
       console.log('Starting doAnonymizeAllUsers function...');
       // Anonymize users
       for (const user of usersToAnonymize) {
+        console.log('Starting iteration for user:', user.id);
         await new Promise((resolve, reject) => {
           setTimeout(async function() {
             user.site = self;
@@ -1009,6 +1011,7 @@ Wil je dit liever niet? Dan hoef je alleen een keer in te loggen op de website o
               console.error('Error anonymizing user:', err.message);
               throw err;
             });
+        console.log('Iteration for user:', user.id, 'completed.');
       }
 
       for (let externalUserId of externalUserIds) {
