@@ -21,7 +21,7 @@ class MailConfig {
     }
 
     // Put the title in the config as well
-    self.config.title = site.title || self.config.title;
+    self.config.title = !!site.title ? site.title : self.config.title;
 
     return self;
 
