@@ -29,6 +29,6 @@ module.exports = {
     emailData.text = nunjucks.renderString(emailData.text, emailData);
     data.html = nunjucks.render(emailData.template, emailData);
 
-    mail.sendNotificationMail(data);
+    mail.sendNotificationMail(data, site);
   }
 }
