@@ -37,7 +37,8 @@ const publish = async (notificationRuleSet, siteId, ruleSetData) => {
   ruleSets.forEach((ruleset) => {
     const rulesetString = ruleset.body;
 
-    console.log('match json logic: ', jsonLogic.apply(rulesetString, ruleSetData));
+    console.log('Rule set string:', rulesetString);
+
     if (jsonLogic.apply(JSON.parse(rulesetString), ruleSetData)) {
       const { notification_template, notification_recipients } = ruleset;
 
