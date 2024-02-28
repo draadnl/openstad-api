@@ -119,9 +119,9 @@ class MailConfig {
       attachments.push('logo.png');
     }
     
-    if (!logo) {
-      attachments.push('openstad-logo.png');
-    }
+    // if (!logo) {
+    //   attachments.push('openstad-logo.png');
+    // }
     
     return attachments;
   }
