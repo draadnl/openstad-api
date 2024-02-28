@@ -15,9 +15,11 @@ class MailConfig {
     self.config.title = self.config.siteName || self.config.title;
     self.config.newslettersignup.confirmationEmail.attachments = (self.config.ideas && self.config.ideas.feedbackEmail && self.config.ideas.feedbackEmail.attachments) || self.config.newslettersignup.confirmationEmail.attachments;
     self.config.newslettersignup.confirmationEmail.subject = (self.config.ideas && self.config.ideas.feedbackEmail && self.config.ideas.feedbackEmail.subject) || self.config.newslettersignup.confirmationEmail.subject;
-    
-    self.config = merge.recursive(self.config, site.config || {});
-    
+
+    if (site && site.config) {
+      self.config = merge.recursive(self.config, site.config);
+    }
+
     // Put the title in the config as well
     self.config.title = site.title || self.config.title;
 
