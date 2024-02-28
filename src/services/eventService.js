@@ -39,7 +39,11 @@ const publish = async (notificationRuleSet, siteId, ruleSetData) => {
 
     console.log('Rule set string:', rulesetString);
 
-    if (jsonLogic.apply(JSON.parse(rulesetString), ruleSetData)) {
+    if (jsonLogic.apply(ruleset.body, ruleSetData) === false) {
+      console.log('ruleset doesnt match', ruleset.id, ruleset.body);
+      return false;
+    }
+    
       const { notification_template, notification_recipients } = ruleset;
 
       const recipients = notification_recipients.map(recipient => {
@@ -77,7 +81,6 @@ const publish = async (notificationRuleSet, siteId, ruleSetData) => {
       recipients
           .filter(recipient => recipient.email)
           .forEach(recipient => notificationService.notify(emailData, recipient, siteId));
-    }
   });
 };
 
