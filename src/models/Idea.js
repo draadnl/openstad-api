@@ -1407,7 +1407,7 @@ module.exports = function (db, sequelize, DataTypes) {
       });
       if (firstLikeSubmitted || firstArgSubmitted) {
         throw Error(
-          'You cannot edit an idea after the first like or argument has been added'
+          'Je kunt een idee niet bewerken nadat de eerste like of het eerste argument is toegevoegd'
         );
       }
     }
