@@ -26,121 +26,85 @@ class MailConfig {
   }
 
   getTitle() {
-    const title = this.config.title;
-    console.log(`Getting title: ${title}`);
-    return title;
+    return this.config.title;
   }
 
   getCmsUrl() {
-    const url = this.config.cms.url;
-    console.log(`Getting CMS URL: ${url}`);
-    return url;
+    return this.config.cms.url;
   }
 
   getCmsHostname() {
-    const hostname = this.config.cms.hostname;
-    console.log(`Getting CMS hostname: ${hostname}`);
-    return hostname;
+    return this.config.cms.hostname;
   }
 
   getResourceConfig(resourceType) {
-    const resourceConfig = this.config[resourceType] || {};
-    console.log(`Getting resource config for ${resourceType}:`, resourceConfig);
-    return resourceConfig;
+    return this.config[resourceType] || {};
   }
 
   getResourceFeedbackEmail(resourceType) {
-    const feedbackEmail = this.getResourceConfig(resourceType).feedbackEmail || {};
-    console.log(`Getting resource feedback email for ${resourceType}:`, feedbackEmail);
-    return feedbackEmail;
+    return this.getResourceConfig(resourceType).feedbackEmail || {};
   }
 
   getResourceConceptEmail(resourceType) {
-    const conceptEmail = this.getResourceConfig(resourceType).conceptEmail || {};
-    console.log(`Getting resource concept email for ${resourceType}:`, conceptEmail);
-    return conceptEmail;
+    return this.getResourceConfig(resourceType).conceptEmail || {};
   }
 
   getResourceConceptToPublishedEmail(resourceType) {
-    const conceptToPublishedEmail = this.getResourceConfig(resourceType).conceptToPublishedEmail || {};
-    console.log(`Getting resource concept to published email for ${resourceType}:`, conceptToPublishedEmail);
-    return conceptToPublishedEmail;
+    return this.getResourceConfig(resourceType).conceptToPublishedEmail || {};
   }
 
   getFeedbackEmailFrom(resourceType) {
-    console.log(`Getting feedback email from for ${resourceType}...`);
-    resourceType = resourceType || 'ideas';
-    const from = this.getResourceFeedbackEmail(resourceType).from;
-    console.log(`Feedback email from for ${resourceType}: ${from}`);
-    return from;
+    resourceType = resourceType || 'ideas'
+    return this.getResourceFeedbackEmail(resourceType).from;
   }
 
   getFeedbackEmailInzendingPath(resourceType) {
-    const inzendingPath = this.getResourceFeedbackEmail(resourceType).inzendingPath;
-    console.log(`Getting feedback email inzending path for ${resourceType}: ${inzendingPath}`);
-    return inzendingPath;
+    return this.getResourceFeedbackEmail(resourceType).inzendingPath;
   }
 
   getResourceFeedbackEmailTemplate(resourceType) {
-    const template = this.getResourceFeedbackEmail(resourceType).template;
-    console.log(`Getting resource feedback email template for ${resourceType}: ${template}`);
-    return template;
+    return this.getResourceFeedbackEmail(resourceType).template;
   }
 
   getResourceFeedbackEmailAttachments(resourceType) {
-    const attachments = this.getResourceFeedbackEmail(resourceType).attachments;
-    console.log(`Getting resource feedback email attachments for ${resourceType}:`, attachments);
-    return attachments;
+    return this.getResourceFeedbackEmail(resourceType).attachments;
   }
 
   getResourceFeedbackEmailSubject(resourceType) {
-    const subject = this.getResourceFeedbackEmail(resourceType).subject;
-    console.log(`Getting resource feedback email subject for ${resourceType}: ${subject}`);
-    return subject;
+    return this.getResourceFeedbackEmail(resourceType).subject;
   }
 
   getMailMethod() {
-    const mailMethod = this.config.mail.method;
-    console.log(`Getting mail method: ${mailMethod}`);
-    return mailMethod;
+    return this.config.mail.method;
   }
 
   getMailTransport() {
-    const mailTransport = this.config.mail.transport[this.getMailMethod()];
-    console.log(`Getting mail transport:`, mailTransport);
-    return mailTransport;
+    return this.config.mail.transport[this.getMailMethod()];
   }
 
   getNewsletterSignupConfirmationEmailUrl() {
-    const confirmationEmailUrl = this.config.newslettersignup.confirmationEmail.url;
-    console.log(`Getting newsletter signup confirmation email URL: ${confirmationEmailUrl}`);
-    return confirmationEmailUrl;
+    return this.config.newslettersignup.confirmationEmail.url;
   }
 
   getNewsletterSignupConfirmationEmailTemplate() {
-    const confirmationEmailTemplate = this.config.newslettersignup.confirmationEmail.template;
-    console.log(`Getting newsletter signup confirmation email template: ${confirmationEmailTemplate}`);
-    return confirmationEmailTemplate;
+    return this.config.newslettersignup.confirmationEmail.template;
   }
 
   getNewsletterSignupConfirmationEmailAttachments() {
-    const attachments = this.config.newslettersignup.confirmationEmail.attachments || this.getDefaultEmailAttachments();
-    console.log('Getting newsletter signup confirmation email attachments:', attachments);
-    return attachments;
+    return this.config.newslettersignup.confirmationEmail.attachments || this.getDefaultEmailAttachments();
   }
 
   getNewsletterSignupConfirmationEmailSubject() {
-    const subject = this.config.newslettersignup.confirmationEmail.subject;
-    console.log(`Getting newsletter signup confirmation email subject: ${subject}`);
-    return subject;
+    return this.config.newslettersignup.confirmationEmail.subject;
   }
 
   getLogo() {
     let logo = this.config.styling.logo;
+
     if (process.env.LOGO) {
       logo = process.env.LOGO;
     }
-    console.log(`Getting logo: ${logo}`);
+
     return logo;
   }
 
@@ -156,9 +120,10 @@ class MailConfig {
     if (!logo) {
       attachments.push('openstad-logo.png');
     }
-    console.log('Getting default email attachments:', attachments);
+
     return attachments;
   }
-}
+
+};
 
 module.exports = MailConfig;
