@@ -159,6 +159,6 @@ class MailConfig {
     console.log('Getting default email attachments:', attachments);
     return attachments;
   }
-
+}
 
 module.exports = MailConfig;
