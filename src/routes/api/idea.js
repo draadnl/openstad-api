@@ -250,10 +250,8 @@ router.route('/')
   })
   .post(function(req, res, next) {
     res.json(req.results);
-    if (!req.query.nomail && req.body['publishDate']) {
+    if (!req.query.nomail) {
       mail.sendThankYouMail(req.results, 'ideas', req.site, req.user); 
-    } else if(!req.query.nomail && !req.body['publishDate']) {
-      mail.sendConceptEmail(req.results, 'ideas', req.site, req.user);
     }
   });
 
