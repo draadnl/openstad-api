@@ -38,6 +38,8 @@ let defaultSendMailOptions = {
 // generic send mail function
 function sendMail(site, options) {
 
+  console.log( 'Mail opties', options, site );
+
   if (options.attachments) {
     options.attachments.forEach((entry, index) => {
       options.attachments[index] = {
@@ -131,29 +133,64 @@ function sendConceptEmail(resource, resourceType, site, user) {
 
 // send email to user that submitted a resource
 function sendThankYouMail(resource, resourceType, site, user) {
-  const siteConfig = new MailConfig(site)
+  console.log('Starting sendThankYouMail function...');
 
-  if (!resourceType) return console.error('sendThankYouMail error: resourceType not provided');
+  const siteConfig = new MailConfig(site);
+  console.log('MailConfig instance created.');
+
+  if (!resourceType) {
+    console.error('sendThankYouMail error: resourceType not provided');
+    return;
+  }
+
+  console.log('Resource type provided:', resourceType);
 
   const url = siteConfig.getCmsUrl();
+  console.log('CMS URL:', url);
+
   const hostname = siteConfig.getCmsHostname();
+  console.log('CMS hostname:', hostname);
+
   const sitename = siteConfig.getTitle();
+  console.log('Site name:', sitename);
+
   let inzendingPath = siteConfig.getFeedbackEmailInzendingPath(resourceType);
+  console.log('Feedback email inzending path:', inzendingPath);
+
   const inzendingURL = getInzendingURL(inzendingPath, url, resource, resourceType);
+  console.log('Inzending URL:', inzendingURL);
 
   let fromAddress = siteConfig.getFeedbackEmailFrom(resourceType) || config.email;
-  if (!fromAddress) return console.error('Email error: fromAddress not provided');
-  if (fromAddress.match(/^.+<(.+)>$/, '$1')) fromAddress = fromAddress.replace(/^.+<(.+)>$/, '$1');
+  console.log('From address:', fromAddress);
 
+  if (!fromAddress) {
+    console.error('Email error: fromAddress not provided');
+    return;
+  }
+
+  if (fromAddress.match(/^.+<(.+)>$/, '$1')) {
+    fromAddress = fromAddress.replace(/^.+<(.+)>$/, '$1');
+  }
+
+  console.log('Adjusted from address:', fromAddress);
 
   const logo = siteConfig.getLogo();
+  console.log('Site logo:', logo);
+
   const data = prepareEmailData(user, resource, hostname, sitename, inzendingURL, url, fromAddress, logo);
+  console.log('Email data prepared:', data);
 
   let template = siteConfig.getResourceFeedbackEmailTemplate(resourceType);
-  const html = prepareHtml(template, data);
-  const text = convertHtmlToText(html);
-  const attachments = siteConfig.getResourceFeedbackEmailAttachments(resourceType) || siteConfig.getDefaultEmailAttachments();
+  console.log('Resource feedback email template:', template);
 
+  const html = prepareHtml(template, data);
+  console.log('HTML email prepared.');
+
+  const text = convertHtmlToText(html);
+  console.log('Text version of email prepared.');
+
+  const attachments = siteConfig.getResourceFeedbackEmailAttachments(resourceType) || siteConfig.getDefaultEmailAttachments();
+  console.log('Email attachments:', attachments);
 
   try {
     sendMail(site, {
@@ -165,8 +202,9 @@ function sendThankYouMail(resource, resourceType, site, user) {
       text: text,
       attachments,
     });
+    console.log('Email sent successfully.');
   } catch (err) {
-    console.log(err);
+    console.error('Error while sending email:', err);
   }
 }
 
