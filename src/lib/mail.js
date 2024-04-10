@@ -37,9 +37,6 @@ let defaultSendMailOptions = {
 
 // generic send mail function
 function sendMail(site, options) {
-
-  console.log( 'Mail opties', options, site );
-
   if (options.attachments) {
     options.attachments.forEach((entry, index) => {
       options.attachments[index] = {
@@ -54,10 +51,8 @@ function sendMail(site, options) {
     merge(defaultSendMailOptions, options),
     function (error, info) {
       if (error) {
-        console.log( 'Error Send mail', error);
         logError(error.message);
       } else {
-        console.log( 'Successful Send mail', info);
         log(info.response);
       }
     }
