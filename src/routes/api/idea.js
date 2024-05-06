@@ -252,8 +252,6 @@ router.route('/')
     res.json(req.results);
     if (!req.query.nomail && req.body['publishDate']) {
       mail.sendThankYouMail(req.results, 'ideas', req.site, req.user); 
-    } else if(!req.query.nomail && !req.body['publishDate']) {
-      mail.sendConceptEmail(req.results, 'ideas', req.site, req.user);
     }
   });
 
