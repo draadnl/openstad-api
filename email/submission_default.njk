@@ -98,15 +98,24 @@
         <td width="560">
             {{ text | safe | nl2br }}
             {% if submittedData  %}
-            <table cellpadding="0" cellspacing="0" border="0" align="center" width="100%" style="color: #000; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; width:100%; border: solid 3px #f3f3f4;">
+            <table cellpadding="0" cellspacing="0" border="0" align="center" width="100%" style="color: #000; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; width:100%; border: solid 3px #FF40B4;">
                 <tr>
-                    <td style="border: solid 3px #fdc633;">
+                    <td style="border: solid 3px #FF40B4;">
                         <div style="padding: 20px; font-size: 12px;">
                             {% for fieldKey, value in submittedData %}
-                            <strong>{{ fieldKey }}</strong><br />
-                            {{ value | safe }}
-                            <br />
-                            <br />
+                                {% if fieldKey == "images" %}
+                                    {% if value|length %}
+                                        <strong>{{ fieldKey }}</strong><br />
+                                        {{ value | safe }}
+                                        <br />
+                                        <br />
+                                    {% endif %}
+                                {% else %}
+                                    <strong>{{ fieldKey }}</strong><br />
+                                    {{ value | safe }}
+                                    <br />
+                                    <br />
+                                {% endif %}
                             {% endfor %}
                         </div>
                     </td>
@@ -114,23 +123,12 @@
             </table>
             {% endif %}
 
-            <p style="margin-bottom: 3em; margin-top: 2em;">
-                Met vriendelijke groet,<br>
-                Team {{SITENAME}}
-            </p>
         </td>
         <td></td>
     </tr>
     <tr>
         <td></td>
-        <td style="height: 15px; background-color: #edbf07;" width="560">
-        </td>
-        <td></td>
-    </tr>
-    <tr>
-        <td></td>
-        <td style=" text-align: center; height: 15px;" width="560">
-            <h4><a href="{{URL}}" style="color: black; text-decoration: none;">{{HOSTNAME}}</a></h4>
+        <td style="height: 15px; background-color: #FF40B4;" width="560">
         </td>
         <td></td>
     </tr>
