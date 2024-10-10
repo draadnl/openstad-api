@@ -46,6 +46,10 @@ router.route('/')
 		if (req.body.formName) {
 			data.formName = req.body.formName
 		}
+		
+		if (req.ip) {
+			data.submittedData.ip = req.ip;
+		}
 
 		db.Submission
 			.authorizeData(data, 'create', req.user)
