@@ -47,13 +47,6 @@ router.route('/')
 			data.formName = req.body.formName
 		}
 		
-		const ip = req.headers['x-original-forwarded-for'] || req.headers['x-forwarded-for'] || req.ip;
-		console.log ('====> API submission check IP', ip, req.headers, req.ip);
-		
-		if (ip) {
-			data.submittedData.ip = ip;
-		}
-
 		db.Submission
 			.authorizeData(data, 'create', req.user)
 			.create(data)
