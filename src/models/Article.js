@@ -760,15 +760,19 @@ module.exports = function( db, sequelize, DataTypes ) {
 	}
 
 	let canMutate = function(user, self) {
-		if( !self.isOpen() ) {
-			return false;
-		}
-		if (userHasRole(user, 'editor', self.userId)) {
+		if (
+			userHasRole(user, 'editor', self.userId)
+			|| userHasRole(user, 'admin', self.userId)
+			|| userHasRole(user, 'moderator', self.userId)
+			|| userHasRole(user, 'owner', self.userId)
+		) {
 			return true;
 		}
-		if (!userHasRole(user, 'owner', self.userId)) {
+
+		if ( typeof self.isOpen === 'function' && !self.isOpen() ) {
 			return false;
 		}
+
 		let config = self.site && self.site.config && self.site.config.articles
 		let canEditAfterFirstLikeOrArg = config && config.canEditAfterFirstLikeOrArg || false
 		let voteCount = self.no + self.yes;
