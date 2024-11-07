@@ -278,7 +278,9 @@ router.route('/*')
 		let transaction = res.locals.transaction
 		if (req.site.config.votes.voteType != 'likes') return next();
 
-		if (req.site.config.votes.voteType == 'likes' && req.site.config.votes.requiredUserRole == 'anonymous') {
+		const multipleVotesAllowed = req?.site?.config?.votes?.multipleVotesAllowed || false;
+
+		if (req.site.config.votes.voteType == 'likes' && req.site.config.votes.requiredUserRole == 'anonymous' && !multipleVotesAllowed) {
 			req.votes.forEach((vote) => {
 				// check if votes exists for same opinion on the same IP within 5 minutes
 				const whereClause = {

@@ -641,6 +641,11 @@ Wil je dit liever niet? Dan hoef je alleen een keer in te loggen op de website o
             default: 'likes',
           },
 
+          multipleVotesAllowed: {
+            type: 'boolean',
+            default: false,
+          },
+
           voteValues: {
             type: 'arrayOfObjects',
             default: [
