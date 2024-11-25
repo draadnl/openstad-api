@@ -50,7 +50,8 @@ const createIngress = async (k8sApi, name, domain, namespace) => {
          'cert-manager.io/cluster-issuer': 'openstad-letsencrypt-prod',
          'kubernetes.io/ingress.class': 'nginx',
          // if www host isset it redirects always to www. if without is isset it redirects to not www
-         'nginx.ingress.kubernetes.io/from-to-www-redirect': "true"
+         'nginx.ingress.kubernetes.io/from-to-www-redirect': "true",
+         'nginx.ingress.kubernetes.io/server-snippet': "location = /security.txt {\n  return 302 https://haarlemmermeergemeente.nl/.well-known/security.txt;\n}\nlocation = /.well-known/security.txt {\n  return 302 https://haarlemmermeergemeente.nl/.well-known/security.txt;\n}"
       }
     },
     spec: {
