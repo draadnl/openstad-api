@@ -111,19 +111,16 @@ class MailConfig {
   }
   
   getDefaultEmailAttachments() {
-    const logo = this.getLogo();
-    const attachments = [];
-    
     // if logo is amsterdam, we fallback to old default logo and include it
-    if (logo === 'amsterdam') {
-      attachments.push('logo.png');
-    }
+    // if (logo === 'amsterdam') {
+    //   attachments.push('logo.png');
+    // }
+    //
+    // if (!logo) {
+    //   attachments.push('openstad-logo.png');
+    // }
     
-    if (!logo) {
-      attachments.push('openstad-logo.png');
-    }
-    
-    return attachments;
+    return [];
   }
   
 };
