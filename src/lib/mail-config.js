@@ -18,9 +18,10 @@ class MailConfig {
 
     const siteConfig = site?.config || {};
     self.config = merge.recursive(self.config, siteConfig);
-    
+
     // Put the title in the config as well
-    self.config.title = site.title || self.config.title;
+    const siteTitle = site?.title || "";
+    self.config.title = siteTitle || self.config.title;
 
     return self;
 
