@@ -165,7 +165,9 @@
                     <td style="border: solid 3px #07838f;">
                         <div style="padding: 20px; font-size: 12px;">
                             {% for fieldKey, value in submittedData %}
-                                {% if fieldKey == "images" %}
+                                {% if fieldKey == "budgetDocuments" %}
+                                        <br />
+                                {% elif fieldKey == "images" %}
                                     {% if value|length %}
                                         <strong>{{ fieldKey }}</strong><br />
                                         {{ value | safe }}
