@@ -120,7 +120,10 @@ router.route('/ruleset')
   })
   .post(auth.can('NotificationRuleSet', 'create'))
   .post(async (req, res, next) => {
-
+    if (!req.body.label || typeof req.body.label !== 'string') {
+      return res.status(400).json({ error: 'Label is required and must be a string.' });
+    }
+    
     // Todo: validate request
     try {
       const data = {
