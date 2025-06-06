@@ -30,7 +30,12 @@ const publish = async (notificationRuleSet, siteId, ruleSetData) => {
       const user = {}
       if (recipient.emailType === 'field') {
         // get email field from resource instance, can be dot separated (e.g. submittedData.email)
-        user.email = recipient.value.split('.').reduce((o,i)=>o[i], ruleSetData.instance)
+        try {
+          user.email = recipient.value.split('.').reduce((o, i) => o?.[i], ruleSetData.instance);
+        } catch (e) {
+          user.email = undefined;
+          console.error('Error resolving recipient email field:', recipient.value, e);
+        }
       }
       if (recipient.emailType === 'fixed') {
         user.email = recipient.value
