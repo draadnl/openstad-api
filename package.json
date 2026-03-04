@@ -59,7 +59,7 @@
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-sonarjs": "^0.10.0",
-    "jest": "^27.5.1",
+    "jest": "^30.2.0",
     "npm-commands": "^1.1.0",
     "prettier": "^2.6.2",
     "sequelize-mock": "^0.10.2",
